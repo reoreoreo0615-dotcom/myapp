@@ -33,7 +33,7 @@ const submit = () => {
     <GuestLayout>
         <Head title="ログイン" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+        <div v-if="status" class="mb-4 text-sm font-medium text-ok">
             {{ status }}
         </div>
 
@@ -72,28 +72,27 @@ const submit = () => {
             <div class="mt-4 block">
                 <label class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
+                    <span class="ms-2 text-sm text-ink-2"
                         >ログイン状態を保持する</span
                     >
                 </label>
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    パスワードをお忘れですか?
-                </Link>
-
+            <div class="mt-6 flex flex-col gap-4">
                 <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full"
                     :disabled="form.processing"
                 >
                     ログイン
                 </PrimaryButton>
+
+                <Link
+                    v-if="canResetPassword"
+                    :href="route('password.request')"
+                    class="text-center text-sm text-ink-2 underline underline-offset-2 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                    パスワードをお忘れですか?
+                </Link>
             </div>
         </form>
     </GuestLayout>

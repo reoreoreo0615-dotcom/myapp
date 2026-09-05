@@ -1,212 +1,168 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 
-const showingNavigationDropdown = ref(false);
+const page = usePage();
+const isAdmin = computed(() => page.props.auth.user.is_admin);
+const userName = computed(() => page.props.auth.user.name);
+
+// 記録(ワークアウト記録)と履歴の画面は別Issue(#14 / #9・#10・#11)でこれから作る。
+// ルートがまだ存在しないため、ここでは非活性のプレースホルダーとして置く。
+// メニューは専用画面が未定なので、暫定的にプロフィール編集画面にリンクしている。
+const navItems = computed(() => {
+    const items = [
+        {
+            key: 'dashboard',
+            label: 'ダッシュボード',
+            href: route('dashboard'),
+            active: route().current('dashboard'),
+            icon: 'dashboard',
+        },
+        {
+            key: 'record',
+            label: '記録',
+            href: null,
+            active: false,
+            icon: 'record',
+        },
+        {
+            key: 'history',
+            label: '履歴',
+            href: null,
+            active: false,
+            icon: 'history',
+        },
+        {
+            key: 'menu',
+            label: 'メニュー',
+            href: route('profile.edit'),
+            active: route().current('profile.*'),
+            icon: 'menu',
+        },
+    ];
+
+    if (isAdmin.value) {
+        items.push({
+            key: 'admin',
+            label: '管理',
+            href: route('admin.users.index'),
+            active: route().current('admin.*'),
+            icon: 'admin',
+        });
+    }
+
+    return items;
+});
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav
-                class="border-b border-gray-100 bg-white"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
-
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    ダッシュボード
-                                </NavLink>
-                                <NavLink
-                                    v-if="$page.props.auth.user.is_admin"
-                                    :href="route('admin.users.index')"
-                                    :active="route().current('admin.*')"
-                                >
-                                    ユーザー管理
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            プロフィール
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            ログアウト
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
+    <div class="flex min-h-screen flex-col bg-ground pb-24">
+        <!-- 上部バーは最小限。画面名 + 画面固有の情報 + ログアウト -->
+        <header
+            class="flex items-center justify-between gap-4 border-b border-line px-4 py-4"
+        >
+            <div class="min-w-0 flex-1">
+                <slot name="header" />
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+                <span class="label-micro text-ink-3 truncate max-w-24">{{ userName }}</span>
+                <Link
+                    :href="route('logout')"
+                    method="post"
+                    as="button"
+                    type="button"
+                    class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            ダッシュボード
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            v-if="$page.props.auth.user.is_admin"
-                            :href="route('admin.users.index')"
-                            :active="route().current('admin.*')"
-                        >
-                            ユーザー管理
-                        </ResponsiveNavLink>
-                    </div>
+                    ログアウト
+                </Link>
+            </div>
+        </header>
 
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
+        <main class="flex-1 px-4 py-6">
+            <slot />
+        </main>
+
+        <!-- 下部固定ナビ(スマホの親指が届く位置) -->
+        <nav
+            class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface"
+            style="padding-bottom: env(safe-area-inset-bottom)"
+        >
+            <ul class="flex">
+                <li v-for="item in navItems" :key="item.key" class="flex-1">
+                    <Link
+                        v-if="item.href"
+                        :href="item.href"
+                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 border-t-2 px-1 py-2"
+                        :class="
+                            item.active
+                                ? 'border-accent text-accent'
+                                : 'border-transparent text-ink-2'
+                        "
                     >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
-                            </div>
-                        </div>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            class="h-5 w-5"
+                            aria-hidden="true"
+                        >
+                            <template v-if="item.icon === 'dashboard'">
+                                <rect x="3.5" y="3.5" width="7" height="7" />
+                                <rect x="13.5" y="3.5" width="7" height="7" />
+                                <rect x="3.5" y="13.5" width="7" height="7" />
+                                <rect x="13.5" y="13.5" width="7" height="7" />
+                            </template>
+                            <template v-else-if="item.icon === 'record'">
+                                <circle cx="12" cy="12" r="8" />
+                                <circle cx="12" cy="12" r="2.5" />
+                            </template>
+                            <template v-else-if="item.icon === 'history'">
+                                <circle cx="12" cy="12" r="8" />
+                                <path d="M12 7.5V12l3 2" />
+                            </template>
+                            <template v-else-if="item.icon === 'menu'">
+                                <path d="M4 6h16M4 12h16M4 18h16" />
+                            </template>
+                            <template v-else-if="item.icon === 'admin'">
+                                <path
+                                    d="M12 3.5 5 6v5.5c0 4.2 3 7.4 7 9 4-1.6 7-4.8 7-9V6l-7-2.5Z"
+                                />
+                            </template>
+                        </svg>
+                        <span class="label-micro text-[10px]">{{
+                            item.label
+                        }}</span>
+                    </Link>
 
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                プロフィール
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                ログアウト
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Page Heading -->
-            <header
-                class="bg-white shadow"
-                v-if="$slots.header"
-            >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main>
-                <slot />
-            </main>
-        </div>
+                    <span
+                        v-else
+                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 border-t-2 border-transparent px-1 py-2 text-ink-3 opacity-40"
+                        aria-disabled="true"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            class="h-5 w-5"
+                            aria-hidden="true"
+                        >
+                            <template v-if="item.icon === 'record'">
+                                <circle cx="12" cy="12" r="8" />
+                                <circle cx="12" cy="12" r="2.5" />
+                            </template>
+                            <template v-else-if="item.icon === 'history'">
+                                <circle cx="12" cy="12" r="8" />
+                                <path d="M12 7.5V12l3 2" />
+                            </template>
+                        </svg>
+                        <span class="label-micro text-[10px]">{{
+                            item.label
+                        }}</span>
+                    </span>
+                </li>
+            </ul>
+        </nav>
     </div>
 </template>

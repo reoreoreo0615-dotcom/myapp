@@ -25,14 +25,14 @@ const submit = () => {
     <GuestLayout>
         <Head title="パスワードをお忘れの方" />
 
-        <div class="mb-4 text-sm text-gray-600">
+        <div class="mb-4 text-sm text-ink-2">
             パスワードをお忘れですか?ご登録のメールアドレスを入力してください。
             パスワード再設定用のリンクをメールでお送りします。
         </div>
 
         <div
             v-if="status"
-            class="mb-4 text-sm font-medium text-green-600"
+            class="mb-4 text-sm font-medium text-ok"
         >
             {{ status }}
         </div>
@@ -54,11 +54,8 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
+            <div class="mt-6">
+                <PrimaryButton class="w-full" :disabled="form.processing">
                     パスワード再設定メールを送信
                 </PrimaryButton>
             </div>

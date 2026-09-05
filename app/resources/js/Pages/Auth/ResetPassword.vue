@@ -88,11 +88,8 @@ const submit = () => {
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
+            <div class="mt-6">
+                <PrimaryButton class="w-full" :disabled="form.processing">
                     パスワードを再設定
                 </PrimaryButton>
             </div>

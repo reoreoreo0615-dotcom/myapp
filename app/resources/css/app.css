@@ -4,7 +4,72 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * デザイン方向: 計器 / Precision (Issue #16)
+ * 体の進捗を測る精密機器としてアプリを設計する。数値が主役、装飾は限界まで削る。
+ * ダーク基調がデフォルト値。OSがライトを指定していればライトに切り替わる。
+ * 角丸カード・ドロップシャドウ・グラデーションは使わない。区切りは細線(hairline)のみ。
+ */
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* タイポグラフィ: Google Fonts 3種 */
+    --font-sans: 'Zen Kaku Gothic New', 'Archivo', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    /* 色トークン: ダーク(既定値)。ライトは下の @media で上書きする */
+    --color-ground: #14171a;
+    --color-surface: #1b1f23;
+    --color-line: #2a3037;
+    --color-ink: #e8eaed;
+    --color-ink-2: #9aa3ac;
+    --color-ink-3: #646d77;
+    --color-accent: #4a90d9;
+    --color-ok: #4fb783;
+    --color-warn: #d9784a;
+}
+
+/* ライトテーマ: OS が light を指定している場合のみ上書き(既定はダーク) */
+@media (prefers-color-scheme: light) {
+    :root {
+        --color-ground: #f7f8f9;
+        --color-surface: #ffffff;
+        --color-line: #dfe3e7;
+        --color-ink: #14171a;
+        --color-ink-2: #5a636c;
+        --color-ink-3: #8b939c;
+        --color-accent: #1f5fa9;
+        --color-ok: #2c7a57;
+        --color-warn: #b0503a;
+    }
+}
+
+@layer base {
+    html {
+        color-scheme: dark light;
+    }
+
+    body {
+        @apply bg-ground text-ink;
+        font-feature-settings:
+            'tnum' 1,
+            'cv01' 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 数値主体の要素は tabular-nums を既定にする */
+    input,
+    button {
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+@layer utilities {
+    /* 微細ラベル: JetBrains Mono / 大文字 / letter-spacing 0.1em */
+    .label-micro {
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
 }

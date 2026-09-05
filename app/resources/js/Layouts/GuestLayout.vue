@@ -4,19 +4,19 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div
-        class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0"
-    >
-        <div>
-            <Link href="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
+    <div class="flex min-h-screen flex-col bg-ground">
+        <header class="flex items-center border-b border-line px-4">
+            <Link
+                :href="route('home')"
+                class="inline-flex min-h-11 items-center gap-2 px-2 py-3"
+            >
+                <ApplicationLogo class="h-6 w-6 fill-current text-ink" />
+                <span class="label-micro text-xs text-ink-2">Overload</span>
             </Link>
-        </div>
+        </header>
 
-        <div
-            class="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
-        >
+        <main class="w-full max-w-sm px-6 py-10 sm:mx-auto sm:max-w-md">
             <slot />
-        </div>
+        </main>
     </div>
 </template>

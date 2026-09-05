@@ -66,94 +66,89 @@ const formatDate = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                ユーザー管理
-            </h2>
+            <h2 class="text-lg font-medium text-ink">ユーザー管理</h2>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-5xl space-y-4 px-4 sm:px-6 lg:px-8">
-                <div
-                    v-if="page.props.flash?.error"
-                    class="rounded-md bg-red-50 p-4 text-sm text-red-700"
-                >
-                    {{ page.props.flash.error }}
+        <div
+            v-if="page.props.flash?.error"
+            class="mb-4 border border-warn px-4 py-3 text-sm text-warn"
+        >
+            {{ page.props.flash.error }}
+        </div>
+
+        <div class="divide-y divide-line border-t border-line">
+            <div
+                v-for="user in users"
+                :key="user.id"
+                class="py-4 first:pt-0"
+            >
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="flex flex-wrap items-center gap-2 truncate font-medium text-ink">
+                            <span class="truncate">{{ user.name }}</span>
+                            <span
+                                v-if="user.is_admin"
+                                class="label-micro shrink-0 border border-accent px-1.5 py-0.5 text-[10px] text-accent"
+                            >
+                                管理者
+                            </span>
+                            <span
+                                v-if="user.id === currentUserId"
+                                class="label-micro shrink-0 border border-line px-1.5 py-0.5 text-[10px] text-ink-3"
+                            >
+                                あなた
+                            </span>
+                        </p>
+                        <p class="truncate text-sm text-ink-2">
+                            {{ user.email }}
+                        </p>
+                    </div>
+                    <span class="label-micro shrink-0 text-[10px] text-ink-3">
+                        ID: {{ user.id }}
+                    </span>
                 </div>
 
-                <div
-                    v-for="user in users"
-                    :key="user.id"
-                    class="overflow-hidden rounded-lg bg-white p-4 shadow-sm"
-                >
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="min-w-0">
-                            <p class="flex flex-wrap items-center gap-2 truncate font-semibold text-gray-900">
-                                <span class="truncate">{{ user.name }}</span>
-                                <span
-                                    v-if="user.is_admin"
-                                    class="inline-flex shrink-0 items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
-                                >
-                                    管理者
-                                </span>
-                                <span
-                                    v-if="user.id === currentUserId"
-                                    class="inline-flex shrink-0 items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
-                                >
-                                    あなた
-                                </span>
-                            </p>
-                            <p class="truncate text-sm text-gray-500">
-                                {{ user.email }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 text-xs text-gray-400">
-                            ID: {{ user.id }}
-                        </span>
+                <dl class="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-ink-2">
+                    <div>
+                        <dt class="label-micro text-[10px] text-ink-3">登録日</dt>
+                        <dd class="tabular-nums">{{ formatDate(user.created_at) }}</dd>
                     </div>
-
-                    <dl class="mt-3 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-gray-600">
-                        <div>
-                            <dt class="text-xs text-gray-400">登録日</dt>
-                            <dd>{{ formatDate(user.created_at) }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-xs text-gray-400">ワークアウト記録件数</dt>
-                            <dd>{{ user.workouts_count }}件</dd>
-                        </div>
-                    </dl>
-
-                    <div v-if="user.id !== currentUserId" class="mt-4 flex flex-wrap gap-2">
-                        <SecondaryButton
-                            :disabled="user.is_admin && !canRevokeAdmin(user)"
-                            :class="{ 'opacity-25': user.is_admin && !canRevokeAdmin(user) }"
-                            :title="
-                                user.is_admin && !canRevokeAdmin(user)
-                                    ? '最後の管理者からは権限を剥奪できません'
-                                    : ''
-                            "
-                            @click="toggleAdmin(user)"
-                        >
-                            {{ user.is_admin ? '管理者権限を剥奪' : '管理者にする' }}
-                        </SecondaryButton>
-                        <DangerButton @click="confirmDelete(user)">
-                            削除
-                        </DangerButton>
+                    <div>
+                        <dt class="label-micro text-[10px] text-ink-3">ワークアウト記録件数</dt>
+                        <dd class="tabular-nums">{{ user.workouts_count }}件</dd>
                     </div>
-                    <p v-else class="mt-4 text-xs text-gray-400">
-                        自分自身の削除・権限変更はできません
-                    </p>
+                </dl>
+
+                <div v-if="user.id !== currentUserId" class="mt-4 flex flex-wrap gap-2">
+                    <SecondaryButton
+                        :disabled="user.is_admin && !canRevokeAdmin(user)"
+                        :title="
+                            user.is_admin && !canRevokeAdmin(user)
+                                ? '最後の管理者からは権限を剥奪できません'
+                                : ''
+                        "
+                        @click="toggleAdmin(user)"
+                    >
+                        {{ user.is_admin ? '管理者権限を剥奪' : '管理者にする' }}
+                    </SecondaryButton>
+                    <DangerButton @click="confirmDelete(user)">
+                        削除
+                    </DangerButton>
                 </div>
+                <p v-else class="mt-4 text-xs text-ink-3">
+                    自分自身の削除・権限変更はできません
+                </p>
             </div>
         </div>
 
         <Modal :show="confirmingDeleteUser !== null" @close="closeDeleteModal">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+                <h2 class="text-base font-medium text-ink">
                     本当にこのユーザーを削除しますか?
                 </h2>
 
-                <p class="mt-2 text-sm text-gray-600">
-                    <span class="font-medium">{{ confirmingDeleteUser?.name }}</span>
+                <p class="mt-2 text-sm text-ink-2">
+                    <span class="font-medium text-ink">{{ confirmingDeleteUser?.name }}</span>
                     ({{ confirmingDeleteUser?.email }}) を削除すると、
                     このユーザーのワークアウト記録・ルーティン・独自種目が
                     すべて完全に削除されます。この操作は取り消せません。
@@ -163,11 +158,7 @@ const formatDate = (value) => {
                     <SecondaryButton @click="closeDeleteModal">
                         キャンセル
                     </SecondaryButton>
-                    <DangerButton
-                        :class="{ 'opacity-25': isDeleting }"
-                        :disabled="isDeleting"
-                        @click="deleteUser"
-                    >
+                    <DangerButton :disabled="isDeleting" @click="deleteUser">
                         削除する
                     </DangerButton>
                 </div>

@@ -92,21 +92,20 @@ const submit = () => {
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    アカウントをお持ちですか?
-                </Link>
-
+            <div class="mt-6 flex flex-col gap-4">
                 <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full"
                     :disabled="form.processing"
                 >
                     登録する
                 </PrimaryButton>
+
+                <Link
+                    :href="route('login')"
+                    class="text-center text-sm text-ink-2 underline underline-offset-2 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                    アカウントをお持ちですか?
+                </Link>
             </div>
         </form>
     </GuestLayout>

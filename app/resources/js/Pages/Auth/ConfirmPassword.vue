@@ -21,7 +21,7 @@ const submit = () => {
     <GuestLayout>
         <Head title="パスワードの確認" />
 
-        <div class="mb-4 text-sm text-gray-600">
+        <div class="mb-4 text-sm text-ink-2">
             ここはアプリのセキュリティ保護されたエリアです。続行する前にパスワードを確認してください。
         </div>
 
@@ -40,12 +40,8 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4 flex justify-end">
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
+            <div class="mt-6">
+                <PrimaryButton class="w-full" :disabled="form.processing">
                     確認
                 </PrimaryButton>
             </div>

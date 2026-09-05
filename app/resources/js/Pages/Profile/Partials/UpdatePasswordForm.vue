@@ -36,11 +36,9 @@ const updatePassword = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                パスワードの変更
-            </h2>
+            <h2 class="text-base font-medium text-ink">パスワードの変更</h2>
 
-            <p class="mt-1 text-sm text-gray-600">
+            <p class="mt-1 text-sm text-ink-2">
                 アカウントを安全に保つため、長くランダムなパスワードを設定してください。
             </p>
         </header>
@@ -110,7 +108,7 @@ const updatePassword = () => {
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                        class="text-sm text-ink-2"
                     >
                         保存しました。
                     </p>

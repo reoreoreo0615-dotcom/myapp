@@ -25,25 +25,22 @@ const verificationLinkSent = computed(
     <GuestLayout>
         <Head title="メールアドレスの確認" />
 
-        <div class="mb-4 text-sm text-gray-600">
+        <div class="mb-4 text-sm text-ink-2">
             ご登録ありがとうございます!利用を開始する前に、先ほど送信したメール内のリンクを
             クリックしてメールアドレスを確認してください。メールが届いていない場合は、
             再度お送りします。
         </div>
 
         <div
-            class="mb-4 text-sm font-medium text-green-600"
+            class="mb-4 text-sm font-medium text-ok"
             v-if="verificationLinkSent"
         >
             ご登録いただいたメールアドレスに、新しい確認用リンクを送信しました。
         </div>
 
         <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
+            <div class="mt-6 flex flex-col gap-4">
+                <PrimaryButton class="w-full" :disabled="form.processing">
                     確認メールを再送する
                 </PrimaryButton>
 
@@ -51,7 +48,7 @@ const verificationLinkSent = computed(
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="text-center text-sm text-ink-2 underline underline-offset-2 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >ログアウト</Link
                 >
             </div>
