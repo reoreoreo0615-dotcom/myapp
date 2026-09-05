@@ -23,9 +23,17 @@ class WorkoutController extends Controller
     /**
      * Show the routine picker: choose a menu to start a workout from, or
      * jump in without one ("メニューなしの飛び込み").
+     *
+     * If the user already has an unfinished workout, send them back into it
+     * instead of letting them start a second one in parallel — a
+     * "進行中のトレーニングがあります" style redirect. See {@see redirectToActiveWorkout()}.
      */
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
+        if ($redirect = $this->redirectToActiveWorkout($request)) {
+            return $redirect;
+        }
+
         $routines = Routine::query()
             ->where('user_id', $request->user()->id)
             ->withCount('routineExercises')
@@ -46,9 +54,17 @@ class WorkoutController extends Controller
     /**
      * Start a new workout, optionally based on a routine, and send the user
      * straight into the record screen.
+     *
+     * Defensive duplicate of the {@see create()} guard: a direct POST (double
+     * tap, stale tab, replayed request) must not be able to create a second
+     * in-progress workout even if it skipped the picker screen.
      */
     public function store(StoreWorkoutRequest $request): RedirectResponse
     {
+        if ($redirect = $this->redirectToActiveWorkout($request)) {
+            return $redirect;
+        }
+
         $workout = Workout::create([
             'user_id' => $request->user()->id,
             'routine_id' => $request->validated('routine_id'),
@@ -136,12 +152,69 @@ class WorkoutController extends Controller
                 'id' => $workout->id,
                 'performed_on' => $workout->performed_on->format('Y-m-d'),
                 'started_at' => optional($workout->started_at)->toIso8601String(),
+                'finished_at' => optional($workout->finished_at)->toIso8601String(),
                 'routine_name' => $workout->routine->name ?? null,
             ],
-            'canAddExercises' => $workout->routine_id === null,
+            // 終了済みのワークアウトは閲覧専用(セットの追加・編集・削除・種目追加は不可)。
+            'isFinished' => $workout->finished_at !== null,
+            'canAddExercises' => $workout->routine_id === null && $workout->finished_at === null,
             'exercises' => array_values($exercisesPayload),
             'progression' => $progression,
             'recordedSets' => $recordedSets,
         ]);
+    }
+
+    /**
+     * Confirm finished_at on the workout ("トレーニング終了").
+     *
+     * - Already finished: idempotent no-op (guards against a double
+     *   tap/retry surfacing an error instead of just landing back on the
+     *   now-read-only screen).
+     * - Zero sets recorded: the workout is discarded outright rather than
+     *   kept as an empty history row — an empty workout has no volume, no
+     *   PRs, and nothing for the progressive-overload nav to key off, so
+     *   keeping it would only pollute history/aggregates (and issue #4's
+     *   dashboard "training time" stat) with a zero-content session.
+     */
+    public function finish(Request $request, Workout $workout): RedirectResponse
+    {
+        $this->authorize('finish', $workout);
+
+        if ($workout->finished_at !== null) {
+            return Redirect::route('workouts.show', $workout);
+        }
+
+        if (! $workout->workoutSets()->exists()) {
+            $workout->delete();
+
+            return Redirect::route('workouts.create')
+                ->with('info', 'セットが記録されなかったため、このトレーニングは破棄しました。');
+        }
+
+        $workout->update(['finished_at' => now()]);
+
+        return Redirect::route('workouts.show', $workout)
+            ->with('success', 'トレーニングを終了しました。お疲れ様でした。');
+    }
+
+    /**
+     * If the user already has an unfinished workout, redirect them into it
+     * instead of the caller's default behaviour (picker screen / new
+     * workout). Returns null when there is no active workout to redirect to.
+     */
+    private function redirectToActiveWorkout(Request $request): ?RedirectResponse
+    {
+        $activeWorkout = Workout::query()
+            ->where('user_id', $request->user()->id)
+            ->whereNull('finished_at')
+            ->latest('started_at')
+            ->first();
+
+        if ($activeWorkout === null) {
+            return null;
+        }
+
+        return Redirect::route('workouts.show', $activeWorkout)
+            ->with('info', '進行中のトレーニングがあります。続きから再開してください。');
     }
 }

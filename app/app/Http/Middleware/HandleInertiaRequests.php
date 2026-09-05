@@ -37,6 +37,11 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'error' => fn () => $request->session()->get('error'),
                 'success' => fn () => $request->session()->get('success'),
+                // 失敗でも成功でもない、状態を知らせるだけの中立なメッセージ
+                // (例: 進行中のトレーニングへ再誘導した、等)。ok/warn の色は
+                // 意味を持つ色として予約されているため、info はニュートラルな
+                // 配色(line/ink-2)で表示する。
+                'info' => fn () => $request->session()->get('info'),
             ],
         ];
     }

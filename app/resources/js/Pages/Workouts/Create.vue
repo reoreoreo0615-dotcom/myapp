@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Rule from '@/Components/Rule.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 defineProps({
@@ -10,6 +10,8 @@ defineProps({
         required: true,
     },
 });
+
+const page = usePage();
 
 // 二重送信防止(連打でワークアウトが2件作られないようにする)。
 const starting = ref(false);
@@ -39,6 +41,13 @@ const start = (routineId = null) => {
         <template #header>
             <h2 class="text-lg font-medium text-ink">記録を開始</h2>
         </template>
+
+        <div
+            v-if="page.props.flash?.info"
+            class="mb-4 border border-line px-4 py-3 text-sm text-ink-2"
+        >
+            {{ page.props.flash.info }}
+        </div>
 
         <p class="text-sm text-ink-2">
             メニューを選ぶと、そのメニューの種目が記録画面に並びます。

@@ -5,12 +5,19 @@ import Rule from '@/Components/Rule.vue';
 import SetRow from '@/Components/SetRow.vue';
 import TargetDisplay from '@/Components/TargetDisplay.vue';
 import { formatNumber } from '@/Utils/format';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+
+const page = usePage();
 
 const props = defineProps({
     workout: {
         type: Object,
+        required: true,
+    },
+    // 終了済み(finished_at 確定済み)のワークアウトは閲覧専用になる。
+    isFinished: {
+        type: Boolean,
         required: true,
     },
     canAddExercises: {
@@ -205,12 +212,15 @@ function prevSetsText(exerciseId) {
     return sets.map((set) => `${formatNumber(set.weight)}×${set.reps}`).join(' / ');
 }
 
-/* --- 経過時間タイマー --- */
+/* --- 経過時間タイマー(終了済みなら finished_at で止まる) --- */
 
 const now = ref(Date.now());
 let timerHandle = null;
 
 onMounted(() => {
+    if (props.isFinished) {
+        return;
+    }
     timerHandle = setInterval(() => {
         now.value = Date.now();
     }, 1000);
@@ -227,11 +237,40 @@ const elapsedText = computed(() => {
         return '--:--';
     }
     const startMs = new Date(props.workout.started_at).getTime();
-    const diffSec = Math.max(0, Math.floor((now.value - startMs) / 1000));
+    const endMs =
+        props.isFinished && props.workout.finished_at
+            ? new Date(props.workout.finished_at).getTime()
+            : now.value;
+    const diffSec = Math.max(0, Math.floor((endMs - startMs) / 1000));
     const minutes = Math.floor(diffSec / 60);
     const seconds = diffSec % 60;
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
 });
+
+/* --- トレーニング終了 --- */
+
+const finishing = ref(false);
+
+function finishWorkout() {
+    if (finishing.value) {
+        return;
+    }
+    if (!confirm('トレーニングを終了しますか?終了後はセットの追加・編集ができなくなります。')) {
+        return;
+    }
+    finishing.value = true;
+
+    router.patch(
+        route('workouts.finish', props.workout.id),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                finishing.value = false;
+            },
+        },
+    );
+}
 </script>
 
 <template>
@@ -251,6 +290,23 @@ const elapsedText = computed(() => {
                 </div>
             </div>
         </template>
+
+        <div
+            v-if="page.props.flash?.success"
+            class="mb-4 border border-ok px-4 py-3 text-sm text-ok"
+        >
+            {{ page.props.flash.success }}
+        </div>
+        <div
+            v-if="page.props.flash?.info"
+            class="mb-4 border border-line px-4 py-3 text-sm text-ink-2"
+        >
+            {{ page.props.flash.info }}
+        </div>
+
+        <div v-if="isFinished" class="label-micro mb-6 border border-line px-4 py-3 text-ink-2">
+            終了済み・閲覧専用
+        </div>
 
         <div v-if="visibleExercises.length === 0" class="py-8 text-center text-sm text-ink-2">
             記録する種目がありません。下から種目を追加してください。
@@ -289,7 +345,7 @@ const elapsedText = computed(() => {
                         :reps="editingSetId === set.id ? editDraft.reps : set.reps"
                         :weight-step="exercise.weight_increment"
                         completed
-                        editable
+                        :editable="!isFinished"
                         :warmup="set.is_warmup"
                         :editing="editingSetId === set.id"
                         :processing="editProcessing && editingSetId === set.id"
@@ -302,7 +358,7 @@ const elapsedText = computed(() => {
                     />
 
                     <SetRow
-                        v-if="draft[exercise.id]"
+                        v-if="!isFinished && draft[exercise.id]"
                         :set-number="nextSetNumber(exercise.id)"
                         :weight="draft[exercise.id].weight"
                         :reps="draft[exercise.id].reps"
@@ -315,7 +371,7 @@ const elapsedText = computed(() => {
                 </div>
 
                 <label
-                    v-if="draft[exercise.id]"
+                    v-if="!isFinished && draft[exercise.id]"
                     class="mt-2 flex h-11 items-center gap-2 text-sm text-ink-2"
                 >
                     <Checkbox v-model:checked="draft[exercise.id].isWarmup" />
@@ -323,6 +379,18 @@ const elapsedText = computed(() => {
                 </label>
             </section>
         </div>
+
+        <template v-if="!isFinished">
+            <Rule class="mt-8" />
+            <button
+                type="button"
+                class="inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="finishing"
+                @click="finishWorkout"
+            >
+                {{ finishing ? '終了処理中…' : 'トレーニング終了' }}
+            </button>
+        </template>
 
         <template v-if="canAddExercises">
             <Rule class="mt-8" />

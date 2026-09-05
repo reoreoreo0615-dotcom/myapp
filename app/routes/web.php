@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/workouts/create', [WorkoutController::class, 'create'])->name('workouts.create');
     Route::post('/workouts', [WorkoutController::class, 'store'])->name('workouts.store');
     Route::get('/workouts/{workout}', [WorkoutController::class, 'show'])->name('workouts.show');
+    Route::patch('/workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');
 
     Route::post('/workouts/{workout}/sets', [WorkoutSetController::class, 'store'])->name('workouts.sets.store');
     Route::patch('/workouts/{workout}/sets/{workoutSet}', [WorkoutSetController::class, 'update'])->name('workouts.sets.update');
