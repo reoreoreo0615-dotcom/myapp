@@ -1,0 +1,29 @@
+# === MySQLデータ(コンテナが生成する実データ) ===
+db/*
+!db/.gitkeep
+
+# === phpMyAdminセッション ===
+phpmyadmin/sessions/*
+!phpmyadmin/sessions/.gitkeep
+
+# === Laravel(app配下) ===
+app/vendor/
+app/node_modules/
+app/.env
+app/.env.backup
+app/.phpunit.result.cache
+app/storage/*.key
+app/storage/framework/cache/data/*
+app/storage/framework/sessions/*
+app/storage/framework/views/*
+app/storage/logs/*
+app/public/build/
+app/public/hot
+app/public/storage
+app/bootstrap/cache/*.php
+
+# === OS / エディタ ===
+.DS_Store
+*.swp
+.idea/
+.vscode/
