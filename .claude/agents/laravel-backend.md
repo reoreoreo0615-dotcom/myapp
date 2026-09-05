@@ -63,7 +63,23 @@ Phase 2 で使うため意図的に用意されています。「使われてい
 純粋なロジック**として書き(値を引数で受け取る)、ユニットテストを厚くかけるようにします。
 DB アクセスはリポジトリ/クエリ側に置いてください。
 
-### 6. マルチユーザー前提
+### 6. 開発DB `myapp` を絶対に破壊しない
+
+**`myapp` に対して `migrate:fresh` / `migrate:refresh` / `db:wipe` を実行しないこと。**
+このDBには実際のユーザーアカウントと既定種目31件が入っており、消すと復元できない
+(パスワードハッシュや登録日時は失われる)。
+
+スキーマの検証が必要な場合は**テスト用DB `myapp_testing`** を使う:
+
+```bash
+docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:fresh
+```
+
+`php artisan test` は `phpunit.xml` の設定で自動的に `myapp_testing` を使うため安全。
+
+2026-09-05 に実際にこの事故が起き、実ユーザーと種目31件が消えた。
+
+### 7. マルチユーザー前提
 
 全テーブルが `user_id` を持ちます。他ユーザーのデータに触れないよう Policy で制御し、
 クエリでも必ず所有者で絞ってください。
@@ -74,8 +90,16 @@ DB アクセスはリポジトリ/クエリ側に置いてください。
 2. 実装する
 3. `docker compose exec php ./vendor/bin/pint` で整形する
 4. `docker compose exec php php artisan test` が通ることを確認する
-5. マイグレーションを書いたら `migrate:fresh` と `migrate:rollback` の両方を試す
-   (rollback は外部キーの削除順で失敗しがちです)
+5. マイグレーションを書いたら `migrate:fresh` と `migrate:rollback` の両方を試す。
+   **必ずテストDB `myapp_testing` に対して実行すること**(上記ルール6):
+
+   ```bash
+   docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:fresh
+   docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:rollback
+   ```
+
+   rollback は外部キーの削除順で失敗しがちなので必ず実行して確認してください。
+   開発DB `myapp` には `migrate`(前進のみ)だけを適用します。
 
 ## 報告に必ず含めること
 
