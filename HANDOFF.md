@@ -7,12 +7,23 @@
 
 ## 1. このプロジェクトは何か
 
-個人開発用の Web アプリケーション。現時点では **アプリの題材は未定**で、
-Laravel + Docker の開発環境と GitHub のリポジトリ・Issue 管理までを構築済み。
+**筋トレ管理アプリ「Overload」** — 個人開発の Web アプリケーション。
 
-- ローカルパス: `/Applications/MAMP/htdocs/laravel/myapp`
-- GitHub リポジトリ: https://github.com/reoreoreo0615-dotcom/myapp (Private)
-- GitHub Project(ボード): 「個人開発」 https://github.com/users/reoreoreo0615-dotcom/projects/2
+既存のトレーニング記録アプリ(Strong / Hevy / FitNote 等)はほぼすべて「記録帳」で止まり、
+次に何をすべきかを言ってくれない。Overload は筋肥大の唯一の原則である**漸進的過負荷**を
+アプリ側が計算し、**「今日は何kgを何回やればいいか」を先に提示する**ことを差別化軸に置く。
+
+| 項目 | 内容 |
+| --- | --- |
+| 差別化軸 | ① 漸進的過負荷ナビ ② ジムでの入力速度(1セット=タップ1回) |
+| ローカルパス | `/Applications/MAMP/htdocs/laravel/myapp` |
+| GitHub | https://github.com/reoreoreo0615-dotcom/myapp (Private) |
+| Project ボード | https://github.com/users/reoreoreo0615-dotcom/projects/2 |
+| **設計仕様書(必読)** | https://claude.ai/code/artifact/960e32f1-ad73-400d-9f21-eddde8965ca0 |
+| 仕様書のソース | `.claude/docs/overload-spec.html`(git管理下。編集したら再公開する) |
+
+> **作業を引き継ぐ人は、まず上の設計仕様書を読むこと。**
+> DB設計・コアロジック・画面モック・開発体制がすべて図とモックで説明されている。
 
 ---
 
@@ -33,6 +44,12 @@ Laravel + Docker の開発環境と GitHub のリポジトリ・Issue 管理ま�
 
 ```
 myapp/
+├── .claude/          … Claude 用の規約・ドキュメント・作業記録
+│   ├── CLAUDE.md     … 開発規約の本体(ルートの CLAUDE.md から読み込まれる)
+│   ├── docs/         … 設計ドキュメント(overload-spec.html)
+│   ├── issues/       … 各 Issue の本文 MD
+│   └── worklog/      … 作業記録 MD(issue-<番号>_<YYYY-MM-DD>.md)
+├── CLAUDE.md         … 自動読み込みの入口(@.claude/CLAUDE.md)
 ├── app/              … Laravel アプリ本体(ここが Laravel のルート)
 ├── db/               … MySQL データ(git管理外)
 ├── docker/
@@ -100,36 +117,84 @@ make logs      # ログ
 - [x] 日本語ローカライズ(`APP_LOCALE=ja` / `APP_TIMEZONE=Asia/Tokyo`)
 - [x] README・Makefile・.gitignore 整備
 - [x] GitHub リポジトリ作成 + 初回 push(main ブランチ)
-- [x] GitHub Project「個人開発」作成、Issue 6件を紐付け
+- [x] GitHub Project「個人開発」作成
 - [x] Issue #1(環境構築)をクローズ
+- [x] **アプリの題材決定(筋トレ管理アプリ Overload)**
+- [x] **技術選定の確定(Inertia + Vue 3 / 公式スターターキット)**
+- [x] **DB設計・コアロジック・画面設計の確定**
+- [x] **設計仕様書の作成(`.claude/docs/overload-spec.html` / Artifact 公開済み)**
+- [x] **Issue #2〜#4 の具体化、#7〜#12 の新規作成**
+
+### 確定した技術選定
+
+| 項目 | 選択 | 理由 |
+| --- | --- | --- |
+| フロント | **Inertia + Vue 3** | フロント技術の市場価値を取る判断。Livewire より学習量は増えるので機能スコープを絞って相殺する |
+| 認証 | **Laravel 公式スターターキット** | 認証の再発明に時間を使わない |
+| CSS | Tailwind CSS v4 | 既に `app/package.json` に導入済み |
+| テスト | PHPUnit(Pest 併用は実装時に判断) | |
+
+> 注意: 現状の `app/` は**素の Laravel 13 スケルトン**で、Inertia / Vue は未導入。
+> スターターキットは `laravel new` 時に選ぶものなので、**既存プロジェクトへの後付け手順の調査が Issue #2 の最初のタスク**。
 
 ### 現在の Issue 状況
 
-| # | タイトル | ラベル | 状態 |
-|---|---------|-------|------|
-| 1 | 開発環境の構築(Docker + Laravel 13) | setup | ✅ Closed |
-| 2 | 認証機能の実装 | feature | 🔲 Open |
-| 3 | DB設計・マイグレーション作成 | feature | 🔲 Open |
-| 4 | トップページ・共通レイアウト作成 | feature | 🔲 Open |
-| 5 | CI設定(GitHub Actions) | infra | 🔲 Open |
-| 6 | コード整形(Laravel Pint)導入 | infra | 🔲 Open |
+| # | タイトル | ラベル | 状態 | 段階 |
+|---|---------|-------|------|------|
+| 1 | 開発環境の構築(Docker + Laravel 13) | setup | ✅ Closed | — |
+| 3 | DB設計・マイグレーション作成(Overload 6テーブル) | feature | 🔲 Open | **基盤・最優先** |
+| 2 | 認証機能の実装(スターターキット + Inertia/Vue3 基盤) | feature | 🔲 Open | 基盤 |
+| 6 | コード整形(Laravel Pint)導入 | infra | 🔲 Open | 基盤 |
+| 5 | CI設定(GitHub Actions) | infra | 🔲 Open | 基盤 |
+| 7 | 種目マスタのシーダー作成(主要30種目) | feature | 🔲 Open | 中核 |
+| 8 | ProgressionService — 漸進的過負荷ロジック + 推定1RM | feature | 🔲 Open | **中核** |
+| 9 | ルーティン(メニュー)管理機能 | feature | 🔲 Open | 機能 |
+| 10 | ワークアウト記録画面(最重要) | feature | 🔲 Open | 機能 |
+| 11 | 種目別履歴・推定1RM推移グラフ | feature | 🔲 Open | 機能 |
+| 4 | ダッシュボード・共通レイアウト作成 | feature | 🔲 Open | 機能 |
+| 12 | サブエージェント構成の整備(.claude/agents/) | infra | 🔲 Open | 体制 |
 
-> Issue #2〜#6 は**汎用のスターター**。アプリの題材が決まったら具体化・追加すること。
+**着手順の根拠**
+- #3(スキーマ)が固まらないと他が全部書き直しになるので最優先。
+- #6 Pint と #5 CI を機能実装より前に入れるのは、後から一括整形すると差分が巨大になりレビュー不能になるため。
+- #8 ProgressionService はアプリの価値そのもの。画面(#10)より先にロジックとテストを固める。
 
 ---
 
 ## 6. 次にやること(TODO)
 
-### 最優先: アプリの題材決め
-- 現状 Issue は汎用。作るもの(例: 家計簿 / タスク管理 / ブログ 等)を決めると、
-  DB設計(#3)・画面(#4)・機能 Issue を具体化できる。
+### 直近の着手対象
+1. **Issue #3(DB設計・マイグレーション)** — 全ての前提。ここが固まるまで他に着手しない。
+2. Issue #2(認証 + Inertia/Vue3 基盤)— #3 と並行可。
+3. Issue #6 → #5(Pint → CI)。
 
-### 開発の進め方(希望のエージェント構成)
-- ユーザー希望: **メインの指示・設計は Opus、実装などのサブ作業は Sonnet に任せる**。
-- 具体化の候補:
-  - `.claude/agents/` に実装担当のサブエージェント(Sonnet)を定義する。
-  - Opus 側で設計・Issue 分解 → 実装は Sonnet サブエージェントに委譲、という運用。
-- ※ この構成はまだ**未着手**。次セッションで設計から始める。
+### 開発体制(Opus 主導 + Sonnet 委譲)
+
+ユーザーの希望する体制。**境界は「判断が要るか」で引く。**
+
+| Opus が持つ | Sonnet サブエージェントに渡す |
+| --- | --- |
+| スキーマ設計・命名・トレードオフの決定 | マイグレーション・モデルの記述 |
+| Issue 分解と受入条件の定義 | 確定した仕様のコード化 |
+| レビューと統合 | テストコードの記述 |
+| Issue への MD 記録とクローズ | |
+
+定義予定のエージェント(`.claude/agents/`、すべて model: sonnet):
+
+| エージェント | 担当 |
+| --- | --- |
+| `laravel-backend` | マイグレーション / モデル / リレーション / コントローラ / FormRequest / Policy |
+| `vue-frontend` | Inertia ページ / Vue コンポーネント / Tailwind スタイル |
+| `test-writer` | Feature テスト / ProgressionService のユニットテスト |
+
+→ **Issue #12** で整備する。`.claude/` ディレクトリはまだ存在しない。
+
+### 運用ルール(ユーザー指示)
+
+- **GitHub Issue の追加・更新・クローズは Claude に一任されている。**
+- **対応が完了したら、対象 Issue のコメントに Markdown 形式で作業記録を残してからクローズする。**
+  記録に含める内容: 実装内容の要約 / 作成・変更したファイル / 設計上の判断とその理由 / 残課題。
+  `gh issue comment <番号> --body-file <MDファイル>`
 
 ---
 

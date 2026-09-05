@@ -1,0 +1,952 @@
+<title>Overload</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --bg:#F4F6F9;
+  --surface:#FFFFFF;
+  --surface-2:#EBEEF3;
+  --border:#D9DEE7;
+  --border-strong:#BFC7D4;
+  --text:#191D25;
+  --text-2:#576070;
+  --text-3:#8A93A3;
+  --accent:#1F5FA9;
+  --accent-2:#3B7FCC;
+  --accent-soft:#E2ECF8;
+  --good:#2C7A57;
+  --good-soft:#DFF0E7;
+  --warn:#B04338;
+  --warn-soft:#FAE6E3;
+  --shadow:0 1px 2px rgba(25,29,37,.06), 0 8px 24px -12px rgba(25,29,37,.18);
+
+  --font-display:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --font-body:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic UI',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --maxw:1080px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121519;
+    --surface:#1A1E25;
+    --surface-2:#222730;
+    --border:#2D333E;
+    --border-strong:#3D4552;
+    --text:#E7EBF1;
+    --text-2:#A0A9B8;
+    --text-3:#6D7686;
+    --accent:#6BA5E8;
+    --accent-2:#8DBDF2;
+    --accent-soft:#1A2B41;
+    --good:#5CB78D;
+    --good-soft:#16281F;
+    --warn:#E27C70;
+    --warn-soft:#2E1D1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121519;
+  --surface:#1A1E25;
+  --surface-2:#222730;
+  --border:#2D333E;
+  --border-strong:#3D4552;
+  --text:#E7EBF1;
+  --text-2:#A0A9B8;
+  --text-3:#6D7686;
+  --accent:#6BA5E8;
+  --accent-2:#8DBDF2;
+  --accent-soft:#1A2B41;
+  --good:#5CB78D;
+  --good-soft:#16281F;
+  --warn:#E27C70;
+  --warn-soft:#2E1D1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- header ---------- */
+.masthead{
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.masthead .wrap{padding-top:40px;padding-bottom:34px}
+.brandline{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:44px;
+  letter-spacing:-.02em;
+  line-height:1;
+  margin:0;
+}
+.brand-jp{color:var(--text-2);font-size:14px;letter-spacing:.06em}
+.tagline{
+  margin:18px 0 0;
+  font-size:17px;
+  color:var(--text-2);
+  max-width:62ch;
+  text-wrap:balance;
+}
+.tagline strong{color:var(--text);font-weight:700}
+.decided{
+  display:flex;flex-wrap:wrap;gap:8px;
+  margin-top:24px;
+}
+.chip{
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  letter-spacing:.02em;
+  padding:5px 10px;
+  border:1px solid var(--border);
+  background:var(--surface-2);
+  color:var(--text-2);
+  border-radius:3px;
+}
+.chip b{color:var(--text);font-weight:500}
+
+/* ---------- nav ---------- */
+.tocbar{
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+}
+.tocbar .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
+.tocbar a{
+  flex:none;
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  color:var(--text-2);
+  text-decoration:none;
+  padding:5px 9px;
+  border-radius:3px;
+  white-space:nowrap;
+}
+.tocbar a:hover{background:var(--surface-2);color:var(--text)}
+.tocbar a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ---------- sections ---------- */
+main .wrap{padding-top:56px;padding-bottom:8px}
+section{margin-bottom:64px;scroll-margin-top:60px}
+.eyebrow{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 6px;
+}
+h2{
+  font-family:var(--font-body);
+  font-weight:700;
+  font-size:26px;
+  line-height:1.35;
+  margin:0 0 10px;
+  letter-spacing:-.01em;
+  text-wrap:balance;
+}
+h3{
+  font-size:16px;font-weight:700;margin:32px 0 10px;
+  text-wrap:balance;
+}
+p{margin:0 0 14px;max-width:68ch}
+.lede{color:var(--text-2);max-width:68ch}
+code{
+  font-family:var(--font-mono);font-size:.88em;
+  background:var(--surface-2);padding:1px 5px;border-radius:3px;
+  border:1px solid var(--border);
+}
+strong{font-weight:700}
+.hr{height:1px;background:var(--border);border:0;margin:0}
+
+/* ---------- figure ---------- */
+figure{margin:24px 0;}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+.figbox{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:20px 22px 14px;
+  overflow-x:auto;
+}
+figcaption{
+  font-size:12.5px;color:var(--text-2);
+  margin-top:12px;padding-top:11px;border-top:1px dashed var(--border);
+  max-width:74ch;
+}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--border);border-radius:6px;background:var(--surface);margin:18px 0}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:13.5px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-3);font-weight:500;background:var(--surface-2);
+  border-bottom:1px solid var(--border-strong);
+}
+tbody tr:last-child td{border-bottom:0}
+td.col{font-family:var(--font-mono);font-size:12.5px;color:var(--text);white-space:nowrap}
+td.typ{font-family:var(--font-mono);font-size:12px;color:var(--text-3);white-space:nowrap}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.key{color:var(--accent);font-weight:500}
+
+/* ---------- callout ---------- */
+.note{
+  border-left:3px solid var(--accent);
+  background:var(--accent-soft);
+  padding:14px 18px;
+  border-radius:0 5px 5px 0;
+  margin:20px 0;
+  font-size:14px;
+}
+.note p{margin:0;max-width:66ch}
+.note p + p{margin-top:8px}
+
+/* ---------- scope split ---------- */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+@media (max-width:720px){.split{grid-template-columns:1fr}}
+.scope{border:1px solid var(--border);border-radius:6px;background:var(--surface);overflow:hidden}
+.scope h4{
+  margin:0;padding:11px 16px;font-size:13px;font-weight:700;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.scope.in h4{background:var(--good-soft);color:var(--good)}
+.scope.out h4{background:var(--surface-2);color:var(--text-2)}
+.scope ul{margin:0;padding:12px 16px 14px 32px;font-size:13.5px;color:var(--text-2)}
+.scope.in li{color:var(--text)}
+.scope li{margin-bottom:5px}
+.scope li:last-child{margin-bottom:0}
+
+/* ---------- mock: phone ---------- */
+.mockrow{display:grid;grid-template-columns:352px 1fr;gap:28px;align-items:start;margin-top:22px}
+@media (max-width:840px){.mockrow{grid-template-columns:1fr}}
+.phone{
+  border:1px solid var(--border-strong);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  font-size:13px;
+}
+.ph-top{
+  padding:12px 15px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  background:var(--surface-2);
+}
+.ph-top .ttl{font-weight:700;font-size:14px}
+.ph-top .sub{font-size:11px;color:var(--text-3);font-family:var(--font-mono)}
+.ph-timer{font-family:var(--font-display);font-weight:600;font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.ex{padding:14px 15px;border-bottom:1px solid var(--border)}
+.ex:last-child{border-bottom:0}
+.ex-name{font-weight:700;font-size:14px;margin-bottom:6px}
+.prev{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.prev .lbl{font-size:10.5px;color:var(--text-3);font-family:var(--font-mono);align-self:center;margin-right:2px}
+.prev span.v{
+  font-family:var(--font-mono);font-size:11px;
+  background:var(--surface-2);border:1px solid var(--border);
+  padding:2px 6px;border-radius:3px;color:var(--text-2);
+  font-variant-numeric:tabular-nums;
+}
+.target{
+  display:flex;align-items:center;gap:9px;
+  background:var(--accent-soft);
+  border:1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  border-radius:5px;padding:8px 11px;margin-bottom:11px;
+}
+.target .tag{
+  font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);white-space:nowrap;
+}
+.target .val{
+  font-family:var(--font-display);font-weight:700;font-size:19px;
+  color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.target .val small{font-size:12px;font-weight:600;margin:0 1px 0 1px}
+.setrow{
+  display:grid;grid-template-columns:22px 1fr 1fr 62px;
+  gap:7px;align-items:center;margin-bottom:7px;
+}
+.setrow:last-child{margin-bottom:0}
+.setno{font-family:var(--font-mono);font-size:11px;color:var(--text-3)}
+.fld{
+  border:1px solid var(--border-strong);border-radius:4px;
+  padding:5px 8px;background:var(--surface);
+  font-family:var(--font-display);font-weight:600;font-size:14px;
+  font-variant-numeric:tabular-nums;
+  display:flex;justify-content:space-between;align-items:baseline;gap:4px;
+}
+.fld u{font-family:var(--font-body);font-size:10px;font-weight:400;color:var(--text-3);text-decoration:none}
+.fld.empty{color:var(--text-3)}
+.btn{
+  font-family:var(--font-body);font-size:12px;font-weight:700;
+  border:0;border-radius:4px;padding:7px 0;text-align:center;
+  background:var(--accent);color:#fff;cursor:default;
+}
+.done{
+  font-size:11.5px;font-weight:700;color:var(--good);
+  background:var(--good-soft);border-radius:4px;padding:7px 0;text-align:center;
+}
+.setrow.is-done .fld{border-color:var(--border);color:var(--text-2);background:var(--surface-2)}
+
+/* ---------- mock: tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.tile{
+  border:1px solid var(--border);border-radius:6px;background:var(--surface);
+  padding:13px 15px;
+}
+.tile .k{font-family:var(--font-mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3)}
+.tile .v{font-family:var(--font-display);font-weight:700;font-size:27px;line-height:1.25;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .v small{font-size:13px;font-weight:600;color:var(--text-2);margin-left:2px}
+.tile .d{font-size:11.5px;margin-top:1px}
+.tile .d.up{color:var(--good)}
+.tile .d.flat{color:var(--text-3)}
+.mocklabel{
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-3);margin-bottom:9px;
+}
+
+/* ---------- roadmap ---------- */
+.road{border:1px solid var(--border);border-radius:6px;background:var(--surface);overflow:hidden;margin-top:20px}
+.road-row{display:grid;grid-template-columns:58px 1fr 96px 88px;gap:12px;padding:10px 15px;border-bottom:1px solid var(--border);align-items:center;font-size:13.5px}
+.road-row:last-child{border-bottom:0}
+.road-row.head{background:var(--surface-2);border-bottom:1px solid var(--border-strong);font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.inum{font-family:var(--font-mono);font-size:12.5px;color:var(--text-2)}
+.who{font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:3px;text-align:center;white-space:nowrap}
+.who.opus{background:var(--accent-soft);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent)}
+.who.sonnet{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
+.ph{font-family:var(--font-mono);font-size:11px;color:var(--text-3);text-align:right}
+@media (max-width:640px){
+  .road-row{grid-template-columns:46px 1fr 76px;}
+  .road-row .ph{display:none}
+}
+
+footer{border-top:1px solid var(--border);margin-top:20px;background:var(--surface)}
+footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--text-3)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="brandline">
+      <h1 class="brand">Overload</h1>
+      <span class="brand-jp">筋トレ管理アプリ / 設計仕様</span>
+    </div>
+    <p class="tagline">記録するだけのアプリは既にたくさんある。Overload は<strong>「今日は何kgを何回やればいいか」を先に言う</strong>。筋肥大の唯一の原則である漸進的過負荷を、アプリ側が計算して提示する。</p>
+    <div class="decided">
+      <span class="chip">題材 <b>筋トレ管理</b></span>
+      <span class="chip">差別化 <b>漸進的過負荷ナビ + 入力速度</b></span>
+      <span class="chip">Backend <b>Laravel 13 / PHP 8.3</b></span>
+      <span class="chip">Frontend <b>Inertia + Vue 3</b></span>
+      <span class="chip">Auth <b>公式スターターキット</b></span>
+      <span class="chip">DB <b>MySQL 8.0</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="tocbar" aria-label="セクション">
+  <div class="wrap">
+    <a href="#why">01 なぜ作るか</a>
+    <a href="#logic">02 コアロジック</a>
+    <a href="#data">03 データモデル</a>
+    <a href="#screens">04 画面</a>
+    <a href="#scope">05 スコープ</a>
+    <a href="#flow">06 開発体制</a>
+    <a href="#roadmap">07 Issue計画</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ============ 01 ============ -->
+<section id="why">
+  <p class="eyebrow">01 / Positioning</p>
+  <h2>既存アプリは「記録帳」で止まっている</h2>
+  <p class="lede">Strong、Hevy、FitNote — トレーニング記録アプリは飽和している。だがそのほとんどは<strong>入力した数字を保管して並べ直すだけ</strong>で、次のセッションで何をすべきかは利用者の頭の中に委ねられている。</p>
+  <p>筋力・筋量が伸びる条件は一つしかない。前回よりわずかに強い刺激を与え続けること — 漸進的過負荷(progressive overload)である。にもかかわらず、その計算をアプリが肩代わりしてくれない。ジムのベンチに寝転がりながら「先週は何キロで何回上がったっけ」とスクロールして探し、暗算する。この数十秒が、記録を続けられない理由になっている。</p>
+  <div class="note">
+    <p><strong>Overload が引き受ける2つのこと</strong></p>
+    <p>① 種目を開いた瞬間に<strong>今日の目標が数値で出ている</strong>こと。② 入力欄にその数値が<strong>最初から入っている</strong>ので、上がったらタップ1回で確定できること。</p>
+  </div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section id="logic">
+  <p class="eyebrow">02 / Core Logic</p>
+  <h2>ダブルプログレッションで次の目標を決める</h2>
+  <p class="lede">重量とレップ数の2軸を交互に伸ばす、ウェイトトレーニングで最も広く使われている漸進法。実装はごく単純な分岐で済み、しかも純粋関数なので<strong>ユニットテストを厚く書ける</strong>。</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 760 244" role="img" aria-label="前回のトップセットのレップ数が目標レンジ上限に達していれば重量を増やしてレップをリセットし、達していなければ同じ重量でレップを1増やす分岐図">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+          </marker>
+          <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon points="0,1 10,5 0,9" fill="var(--accent)"></polygon>
+          </marker>
+        </defs>
+
+        <!-- input box -->
+        <rect x="12" y="90" width="168" height="64" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1" opacity=".95"></rect>
+        <text x="96" y="112" text-anchor="middle" font-size="11" fill="var(--text-3)" font-family="JetBrains Mono, monospace">前回のトップセット</text>
+        <text x="96" y="136" text-anchor="middle" font-size="15" fill="currentColor" font-family="Archivo, sans-serif" font-weight="700">W kg × R 回</text>
+
+        <line x1="182" y1="122" x2="230" y2="122" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"></line>
+
+        <!-- diamond -->
+        <polygon points="330,74 424,122 330,170 236,122" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"></polygon>
+        <text x="330" y="118" text-anchor="middle" font-size="12.5" fill="currentColor" font-family="JetBrains Mono, monospace">R ≥ rep_max</text>
+        <text x="330" y="136" text-anchor="middle" font-size="12.5" fill="currentColor" font-family="JetBrains Mono, monospace">?</text>
+
+        <!-- yes -->
+        <polyline points="330,74 330,48 494,48" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar-a)"></polyline>
+        <text x="342" y="42" font-size="11.5" fill="var(--accent)" font-family="JetBrains Mono, monospace">Yes</text>
+        <rect x="500" y="18" width="248" height="60" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"></rect>
+        <text x="516" y="40" font-size="11" fill="var(--accent)" font-family="JetBrains Mono, monospace">重量アップ</text>
+        <text x="516" y="63" font-size="14" fill="var(--accent)" font-family="Archivo, sans-serif" font-weight="700">(W + increment) kg × rep_min 回</text>
+
+        <!-- no -->
+        <polyline points="330,170 330,196 494,196" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar)"></polyline>
+        <text x="342" y="214" font-size="11.5" fill="currentColor" font-family="JetBrains Mono, monospace">No</text>
+        <rect x="500" y="166" width="248" height="60" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"></rect>
+        <text x="516" y="188" font-size="11" fill="var(--text-3)" font-family="JetBrains Mono, monospace">レップアップ</text>
+        <text x="516" y="211" font-size="14" fill="currentColor" font-family="Archivo, sans-serif" font-weight="700">W kg × (R + 1) 回</text>
+      </svg>
+      <figcaption>分岐は一つだけ。<code>rep_max</code> / <code>rep_min</code> / <code>increment</code> はすべて種目マスタ側に持たせるので、ロジック本体は種目が増えても変わらない。青く塗った枝が「重量が伸びた」瞬間で、アプリが祝うべきイベントでもある。</figcaption>
+    </div>
+  </figure>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>種目</th><th>目標レンジ</th><th>刻み</th><th>前回の結果</th><th>提示する今日の目標</th></tr></thead>
+      <tbody>
+        <tr><td>ベンチプレス</td><td class="typ">8 – 12</td><td class="typ">2.50 kg</td><td class="col">60.0 kg × 12</td><td class="col key">62.5 kg × 8 &nbsp;↑重量</td></tr>
+        <tr><td>ベンチプレス</td><td class="typ">8 – 12</td><td class="typ">2.50 kg</td><td class="col">60.0 kg × 9</td><td class="col">60.0 kg × 10 &nbsp;↑レップ</td></tr>
+        <tr><td>ダンベルカール</td><td class="typ">10 – 15</td><td class="typ">2.00 kg</td><td class="col">14.0 kg × 15</td><td class="col key">16.0 kg × 10 &nbsp;↑重量</td></tr>
+        <tr><td>レッグプレス</td><td class="typ">10 – 15</td><td class="typ">5.00 kg</td><td class="col">180.0 kg × 13</td><td class="col">180.0 kg × 14 &nbsp;↑レップ</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>刻み幅(increment)を種目ごとに持つ理由</h3>
+  <p>「一律 +2.5kg」では現実に合わない。バーベルは 1.25kg プレートを左右に足して +2.5kg が最小、ダンベルは 1kg 刻みのラックなら +2kg、マシンのピンは 5kg 刻みが多い。<strong>器具の物理的制約がそのまま刻み幅になる</strong>ので、これは種目マスタの属性として持つのが正しい。</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 620 116" role="img" aria-label="20キロのバーに20キロプレート2枚と1.25キロプレート2枚を装着して62.5キロになることを示したバーベルの図">
+        <!-- bar -->
+        <rect x="30" y="53" width="560" height="8" rx="4" fill="var(--border-strong)"></rect>
+        <!-- left plates -->
+        <rect x="126" y="22" width="20" height="70" rx="3" fill="#1E5FA8"></rect>
+        <rect x="150" y="41" width="9" height="32" rx="2" fill="var(--border-strong)"></rect>
+        <!-- right plates -->
+        <rect x="474" y="22" width="20" height="70" rx="3" fill="#1E5FA8"></rect>
+        <rect x="461" y="41" width="9" height="32" rx="2" fill="var(--border-strong)"></rect>
+        <!-- collars -->
+        <rect x="118" y="44" width="6" height="26" rx="2" fill="var(--text-3)"></rect>
+        <rect x="496" y="44" width="6" height="26" rx="2" fill="var(--text-3)"></rect>
+
+        <text x="136" y="16" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">20kg</text>
+        <text x="154" y="88" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1.25</text>
+        <text x="484" y="16" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">20kg</text>
+        <text x="466" y="88" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1.25</text>
+        <text x="310" y="44" text-anchor="middle" font-size="11" fill="var(--text-3)" font-family="JetBrains Mono, monospace">バー 20kg</text>
+        <text x="310" y="86" text-anchor="middle" font-size="15" fill="var(--accent)" font-family="Archivo, sans-serif" font-weight="700">= 62.5 kg</text>
+      </svg>
+      <figcaption>60.0 kg から一段上げると 62.5 kg。バーベル種目の <code>weight_increment</code> が 2.50 なのは、1.25kg プレートを左右に1枚ずつ足すのが物理的な最小単位だから。ジムに 0.5kg プレートがあれば刻みを 1.00 に変えられる。</figcaption>
+    </div>
+  </figure>
+</section>
+
+<!-- ============ 03 ============ -->
+<section id="data">
+  <p class="eyebrow">03 / Data Model</p>
+  <h2>セッション・セット・種目の3層構造</h2>
+  <p class="lede">「1回のジム」を <code>workouts</code>、「そのなかの1セット」を <code>workout_sets</code>、「ベンチプレスという種目そのもの」を <code>exercises</code> に分ける。ここを混ぜると集計クエリが破綻する。</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 740 338" role="img" aria-label="usersからworkoutsとroutinesが伸び、workoutsはworkout_setsを持ち、routinesはroutine_exercisesを持ち、その両方がexercisesを参照するER図">
+        <defs>
+          <marker id="er" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+          </marker>
+        </defs>
+
+        <!-- users -->
+        <rect x="14" y="141" width="138" height="58" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="83" y="165" text-anchor="middle" font-size="13" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">users</text>
+        <text x="83" y="184" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">認証ユーザー</text>
+
+        <!-- workouts -->
+        <rect x="206" y="46" width="146" height="62" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="279" y="70" text-anchor="middle" font-size="13" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">workouts</text>
+        <text x="279" y="89" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">performed_on</text>
+
+        <!-- routines -->
+        <rect x="206" y="232" width="146" height="62" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="279" y="256" text-anchor="middle" font-size="13" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">routines</text>
+        <text x="279" y="275" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">メニュー名</text>
+
+        <!-- workout_sets -->
+        <rect x="404" y="46" width="164" height="62" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+        <text x="486" y="70" text-anchor="middle" font-size="13" fill="var(--accent)" font-family="JetBrains Mono, monospace" font-weight="500">workout_sets</text>
+        <text x="486" y="89" text-anchor="middle" font-size="10.5" fill="var(--accent)" font-family="JetBrains Mono, monospace">weight・reps・is_warmup</text>
+
+        <!-- routine_exercises -->
+        <rect x="404" y="232" width="164" height="62" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="486" y="256" text-anchor="middle" font-size="12" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">routine_exercises</text>
+        <text x="486" y="275" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">並び順・目標セット数</text>
+
+        <!-- exercises -->
+        <rect x="600" y="139" width="132" height="62" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="666" y="163" text-anchor="middle" font-size="13" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">exercises</text>
+        <text x="666" y="182" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">increment・レンジ</text>
+
+        <!-- arrows -->
+        <line x1="152" y1="158" x2="204" y2="98" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="152" y="118" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1 : *</text>
+
+        <line x1="152" y1="182" x2="204" y2="242" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="152" y="230" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1 : *</text>
+
+        <line x1="354" y1="77" x2="400" y2="77" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="358" y="68" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1 : *</text>
+
+        <line x1="354" y1="263" x2="400" y2="263" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="358" y="254" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">1 : *</text>
+
+        <line x1="570" y1="92" x2="614" y2="135" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="576" y="126" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">* : 1</text>
+
+        <line x1="570" y1="248" x2="614" y2="205" stroke="currentColor" stroke-width="1.3" marker-end="url(#er)"></line>
+        <text x="576" y="228" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">* : 1</text>
+
+        <line x1="279" y1="230" x2="279" y2="112" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#er)"></line>
+        <text x="288" y="176" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">nullable</text>
+        <text x="288" y="192" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">routine_id</text>
+      </svg>
+      <figcaption>青く塗った <code>workout_sets</code> がアプリの重心。ここに全ての実測値が溜まり、集計もナビの計算もここを起点にする。破線は「メニューを選んで始めたセッション」を後から辿るための任意の紐づけで、メニューなしの飛び込みトレーニングも記録できる。</figcaption>
+    </div>
+  </figure>
+
+  <h3>exercises — 種目マスタ</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>カラム</th><th>型</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td class="col">user_id</td><td class="typ">bigint nullable</td><td>null なら既定種目(シーダー投入)、値があればユーザー独自種目</td></tr>
+        <tr><td class="col">name</td><td class="typ">string</td><td>ベンチプレス</td></tr>
+        <tr><td class="col">muscle_group</td><td class="typ">enum</td><td>chest / back / shoulders / legs / arms / core</td></tr>
+        <tr><td class="col">movement_type</td><td class="typ">enum</td><td>push / pull / legs / core — <strong>Phase 2 の部位バランス可視化用</strong>。今は使わないが列だけ先に置く</td></tr>
+        <tr><td class="col">equipment</td><td class="typ">enum</td><td>barbell / dumbbell / machine / cable / bodyweight</td></tr>
+        <tr><td class="col">is_bodyweight</td><td class="typ">boolean</td><td>自重種目フラグ。true のとき <code>weight</code> は「加重分」を意味する</td></tr>
+        <tr><td class="col key">weight_increment</td><td class="typ">decimal(4,2)</td><td>漸進の刻み幅。barbell 2.50 / dumbbell 2.00 / machine 5.00</td></tr>
+        <tr><td class="col key">target_rep_min</td><td class="typ">tinyint</td><td>目標レップ下限(既定 8)</td></tr>
+        <tr><td class="col key">target_rep_max</td><td class="typ">tinyint</td><td>目標レップ上限(既定 12)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>workout_sets — 実測値</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>カラム</th><th>型</th><th>役割</th></tr></thead>
+      <tbody>
+        <tr><td class="col">workout_id</td><td class="typ">bigint</td><td>所属セッション</td></tr>
+        <tr><td class="col">exercise_id</td><td class="typ">bigint</td><td>種目</td></tr>
+        <tr><td class="col">set_number</td><td class="typ">tinyint</td><td>そのセッション内でのセット順</td></tr>
+        <tr><td class="col">weight</td><td class="typ">decimal(5,2)</td><td>999.99kg まで。0.25kg 刻みも表現できる</td></tr>
+        <tr><td class="col">reps</td><td class="typ">smallint</td><td>挙上回数</td></tr>
+        <tr><td class="col">rpe</td><td class="typ">decimal(3,1) null</td><td>主観的運動強度 6.0〜10.0。<strong>Phase 2 のナビ補正の伏線</strong></td></tr>
+        <tr><td class="col key">is_warmup</td><td class="typ">boolean</td><td><strong>これが無いと数字が全部狂う。</strong>アップのセットを総ボリューム・記録更新・ナビ計算から除外する</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p><strong>設計の先送りを許さない2点。</strong><code>movement_type</code> と <code>rpe</code> は MVP では一切使わないが、列は最初から用意する。データが数百件積まれた後のカラム追加とバックフィルは、今なら10秒で済む作業を数時間に変える。</p>
+  </div>
+
+  <h3>インデックス</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>テーブル</th><th>インデックス</th><th>効かせたいクエリ</th></tr></thead>
+      <tbody>
+        <tr><td class="col">workouts</td><td class="col">(user_id, performed_on)</td><td>カレンダー表示・期間集計</td></tr>
+        <tr><td class="col">workout_sets</td><td class="col">(exercise_id, workout_id)</td><td><strong>「この種目の前回の記録」</strong> — ナビが毎回叩く最重要クエリ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>記録画面は種目ごとに前回値を引くため、素直に書くと <code>Exercise</code> の数だけクエリが飛ぶ。<strong>N+1 が必ず出る場所</strong>なので、Eager Loading とサブクエリでの解決を実装課題として明示的に扱う。</p>
+</section>
+
+<!-- ============ 04 ============ -->
+<section id="screens">
+  <p class="eyebrow">04 / Screens</p>
+  <h2>記録画面がアプリの全体重を支える</h2>
+  <p class="lede">汗だくの手、片手操作、ジムの弱い電波。この3条件を前提に、<strong>1セット記録するまでのタップ数を1回</strong>に固定する。ここが遅いアプリは必ず使われなくなる。</p>
+
+  <div class="mockrow">
+    <div>
+      <p class="mocklabel">① ワークアウト記録</p>
+      <div class="phone">
+        <div class="ph-top">
+          <div>
+            <div class="ttl">胸の日</div>
+            <div class="sub">2026-09-05</div>
+          </div>
+          <div class="ph-timer">42:15</div>
+        </div>
+
+        <div class="ex">
+          <div class="ex-name">ベンチプレス</div>
+          <div class="prev">
+            <span class="lbl">前回</span>
+            <span class="v">60×8</span><span class="v">60×8</span><span class="v">60×7</span>
+          </div>
+          <div class="target">
+            <span class="tag">今日の目標</span>
+            <span class="val">62.5<small>kg</small> × 8<small>回</small></span>
+          </div>
+          <div class="setrow is-done">
+            <span class="setno">1</span>
+            <span class="fld">62.5<u>kg</u></span>
+            <span class="fld">8<u>回</u></span>
+            <span class="done">✓ 完了</span>
+          </div>
+          <div class="setrow">
+            <span class="setno">2</span>
+            <span class="fld">62.5<u>kg</u></span>
+            <span class="fld">8<u>回</u></span>
+            <span class="btn">記録</span>
+          </div>
+          <div class="setrow">
+            <span class="setno">3</span>
+            <span class="fld">62.5<u>kg</u></span>
+            <span class="fld empty">—<u>回</u></span>
+            <span class="btn">記録</span>
+          </div>
+        </div>
+
+        <div class="ex">
+          <div class="ex-name">インクラインダンベルプレス</div>
+          <div class="prev">
+            <span class="lbl">前回</span>
+            <span class="v">22×10</span><span class="v">22×9</span><span class="v">20×10</span>
+          </div>
+          <div class="target">
+            <span class="tag">今日の目標</span>
+            <span class="val">22<small>kg</small> × 11<small>回</small></span>
+          </div>
+          <div class="setrow">
+            <span class="setno">1</span>
+            <span class="fld">22.0<u>kg</u></span>
+            <span class="fld">11<u>回</u></span>
+            <span class="btn">記録</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="mocklabel">② ダッシュボード</p>
+      <div class="tiles">
+        <div class="tile">
+          <div class="k">今週の総ボリューム</div>
+          <div class="v">12,480<small>kg</small></div>
+          <div class="d up">▲ 8.2% 先週比</div>
+        </div>
+        <div class="tile">
+          <div class="k">連続トレーニング</div>
+          <div class="v">14<small>週</small></div>
+          <div class="d up">最長記録を更新中</div>
+        </div>
+        <div class="tile">
+          <div class="k">今月の記録更新</div>
+          <div class="v">3<small>種目</small></div>
+          <div class="d flat">デッドリフト / スクワット / 懸垂</div>
+        </div>
+        <div class="tile">
+          <div class="k">直近の自己ベスト</div>
+          <div class="v">120<small>kg × 5</small></div>
+          <div class="d flat">デッドリフト・9/3</div>
+        </div>
+      </div>
+
+      <p class="mocklabel" style="margin-top:26px">③ 種目別履歴 — 推定1RM推移</p>
+      <div class="figbox" style="padding:16px 18px 12px">
+        <svg viewBox="0 0 720 296" role="img" aria-label="ベンチプレスの推定1RMが13週間で76.0kgから88.8kgまで、のこぎり状に上昇し、第6週から第8週は83.3kgで停滞したことを示す折れ線グラフ">
+          <!-- gridlines -->
+          <line x1="56" y1="236.25" x2="700" y2="236.25" stroke="currentColor" stroke-width=".6" opacity=".18"></line>
+          <line x1="56" y1="167.5" x2="700" y2="167.5" stroke="currentColor" stroke-width=".6" opacity=".18"></line>
+          <line x1="56" y1="98.75" x2="700" y2="98.75" stroke="currentColor" stroke-width=".6" opacity=".18"></line>
+          <line x1="56" y1="30" x2="700" y2="30" stroke="currentColor" stroke-width=".6" opacity=".18"></line>
+          <!-- y labels -->
+          <text x="46" y="240" text-anchor="end" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">75</text>
+          <text x="46" y="171" text-anchor="end" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">80</text>
+          <text x="46" y="102" text-anchor="end" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">85</text>
+          <text x="46" y="34" text-anchor="end" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">90</text>
+          <text x="46" y="18" text-anchor="end" font-size="9.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">kg</text>
+          <!-- axis -->
+          <line x1="56" y1="258" x2="700" y2="258" stroke="currentColor" stroke-width="1" opacity=".4"></line>
+
+          <!-- plateau band -->
+          <rect x="324.3" y="30" width="107.4" height="228" fill="var(--warn)" opacity=".08"></rect>
+
+          <!-- line -->
+          <polyline points="56,222.5 109.7,167.5 163.3,112.5 217,178.5 270.7,149.6 324.3,122.1 378,122.1 431.7,122.1 485.3,93.2 539,64.4 592.7,135.9 646.3,75.4 700,46.5"
+            fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <!-- plateau segment emphasised -->
+          <polyline points="324.3,122.1 378,122.1 431.7,122.1" fill="none" stroke="var(--warn)" stroke-width="3" stroke-linecap="round"></polyline>
+
+          <!-- points -->
+          <circle cx="56" cy="222.5" r="3" fill="var(--accent)"></circle>
+          <circle cx="109.7" cy="167.5" r="3" fill="var(--accent)"></circle>
+          <circle cx="163.3" cy="112.5" r="3" fill="var(--accent)"></circle>
+          <circle cx="217" cy="178.5" r="3" fill="var(--accent)"></circle>
+          <circle cx="270.7" cy="149.6" r="3" fill="var(--accent)"></circle>
+          <circle cx="324.3" cy="122.1" r="3.4" fill="var(--warn)"></circle>
+          <circle cx="378" cy="122.1" r="3.4" fill="var(--warn)"></circle>
+          <circle cx="431.7" cy="122.1" r="3.4" fill="var(--warn)"></circle>
+          <circle cx="485.3" cy="93.2" r="3" fill="var(--accent)"></circle>
+          <circle cx="539" cy="64.4" r="3" fill="var(--accent)"></circle>
+          <circle cx="592.7" cy="135.9" r="3" fill="var(--accent)"></circle>
+          <circle cx="646.3" cy="75.4" r="3" fill="var(--accent)"></circle>
+          <circle cx="700" cy="46.5" r="4.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"></circle>
+
+          <!-- endpoint label -->
+          <text x="694" y="34" text-anchor="end" font-size="13" fill="var(--accent)" font-family="Archivo, sans-serif" font-weight="700">88.8 kg</text>
+
+          <!-- plateau label -->
+          <text x="378" y="278" text-anchor="middle" font-size="10.5" fill="var(--warn)" font-family="JetBrains Mono, monospace">3週停滞</text>
+
+          <!-- x labels -->
+          <text x="56" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W1</text>
+          <text x="163.3" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W3</text>
+          <text x="270.7" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W5</text>
+          <text x="485.3" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W9</text>
+          <text x="592.7" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W11</text>
+          <text x="700" y="274" text-anchor="middle" font-size="10" fill="var(--text-3)" font-family="JetBrains Mono, monospace">W13</text>
+        </svg>
+        <figcaption>ベンチプレス13週分のサンプルデータ。推定1RM は Epley 式 <code>1RM = W × (1 + R / 30)</code>。のこぎり状に見えるのはダブルプログレッションの正常な挙動で、重量を上げた週は一時的に推定値が下がる。赤で示した W6–W8 の平坦部が Phase 2 の停滞検知が拾うべき区間。</figcaption>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section id="scope">
+  <p class="eyebrow">05 / Scope</p>
+  <h2>MVP に入れるもの、入れないもの</h2>
+  <p class="lede">Inertia + Vue を選んだぶん学習量が増えるので、機能側は絞る。<strong>「記録できて、次の目標が出て、伸びが見える」</strong>まででいったん完成とする。</p>
+
+  <div class="split">
+    <div class="scope in">
+      <h4>MVP に入れる</h4>
+      <ul>
+        <li>認証(公式スターターキット)</li>
+        <li>種目マスタ + シーダーで主要30種目</li>
+        <li>ユーザー独自種目の追加</li>
+        <li>ルーティン(メニュー)の作成・編集</li>
+        <li>ワークアウト記録 — 前回値プリセット / タップ1回で確定</li>
+        <li><strong>漸進的過負荷ナビ(ProgressionService)</strong></li>
+        <li>種目別履歴 + 推定1RM推移グラフ</li>
+        <li>ダッシュボード(ボリューム・連続記録・PR)</li>
+      </ul>
+    </div>
+    <div class="scope out">
+      <h4>Phase 2 以降に回す</h4>
+      <ul>
+        <li>停滞(プラトー)検知とデロード提案</li>
+        <li>部位バランス可視化(push / pull 比率)</li>
+        <li>RPE によるナビ補正</li>
+        <li>体重・体脂肪率の記録</li>
+        <li>PWA / オフライン記録</li>
+        <li>記録の公開・共有</li>
+        <li>インターバルタイマー通知</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section id="flow">
+  <p class="eyebrow">06 / Workflow</p>
+  <h2>Opus が設計し、Sonnet が実装する</h2>
+  <p class="lede">設計判断・スキーマ・Issue 分解・レビューは Opus が持つ。マイグレーション、モデル、コントローラ、Vue コンポーネント、テストといった<strong>仕様が確定した後の写経的な作業をサブエージェントに委譲</strong>する。</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 760 226" role="img" aria-label="Opusが設計しIssueに分解、Sonnetが実装とテストを行い、Opusがレビューして差し戻すか、Issueにマークダウンで記録してクローズする開発サイクル図">
+        <defs>
+          <marker id="fw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+          </marker>
+          <marker id="fw-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon points="0,1 10,5 0,9" fill="var(--warn)"></polygon>
+          </marker>
+        </defs>
+
+        <!-- legend -->
+        <rect x="14" y="10" width="11" height="11" rx="2.5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"></rect>
+        <text x="32" y="20" font-size="11" fill="var(--text-3)" font-family="JetBrains Mono, monospace">Opus(設計・判断)</text>
+        <rect x="176" y="10" width="11" height="11" rx="2.5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"></rect>
+        <text x="194" y="20" font-size="11" fill="var(--text-3)" font-family="JetBrains Mono, monospace">Sonnet サブエージェント(実装)</text>
+
+        <!-- boxes -->
+        <rect x="14" y="44" width="160" height="70" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+        <text x="94" y="72" text-anchor="middle" font-size="12.5" fill="var(--accent)" font-family="JetBrains Mono, monospace" font-weight="500">設計 / Issue 分解</text>
+        <text x="94" y="93" text-anchor="middle" font-size="10.5" fill="var(--accent)" font-family="JetBrains Mono, monospace">受入条件を書き切る</text>
+
+        <rect x="204" y="44" width="160" height="70" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="284" y="72" text-anchor="middle" font-size="12.5" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">実装</text>
+        <text x="284" y="93" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">migration・model・Vue</text>
+
+        <rect x="394" y="44" width="160" height="70" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.3"></rect>
+        <text x="474" y="72" text-anchor="middle" font-size="12.5" fill="currentColor" font-family="JetBrains Mono, monospace" font-weight="500">テスト作成</text>
+        <text x="474" y="93" text-anchor="middle" font-size="10.5" fill="var(--text-3)" font-family="JetBrains Mono, monospace">Pest / PHPUnit</text>
+
+        <rect x="584" y="44" width="162" height="70" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"></rect>
+        <text x="665" y="72" text-anchor="middle" font-size="12.5" fill="var(--accent)" font-family="JetBrains Mono, monospace" font-weight="500">レビュー / 統合</text>
+        <text x="665" y="93" text-anchor="middle" font-size="10.5" fill="var(--accent)" font-family="JetBrains Mono, monospace">Issue に MD 記録</text>
+
+        <!-- forward arrows -->
+        <line x1="176" y1="79" x2="200" y2="79" stroke="currentColor" stroke-width="1.4" marker-end="url(#fw)"></line>
+        <line x1="366" y1="79" x2="390" y2="79" stroke="currentColor" stroke-width="1.4" marker-end="url(#fw)"></line>
+        <line x1="556" y1="79" x2="580" y2="79" stroke="currentColor" stroke-width="1.4" marker-end="url(#fw)"></line>
+
+        <!-- feedback -->
+        <polyline points="665,116 665,168 284,168 284,118" fill="none" stroke="var(--warn)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fw-w)"></polyline>
+        <text x="474" y="188" text-anchor="middle" font-size="11" fill="var(--warn)" font-family="JetBrains Mono, monospace">指摘があれば差し戻し</text>
+
+        <!-- close -->
+        <line x1="665" y1="116" x2="665" y2="206" stroke="var(--accent)" stroke-width="0" ></line>
+        <text x="746" y="134" text-anchor="end" font-size="11" fill="var(--accent)" font-family="JetBrains Mono, monospace">→ Issue クローズ</text>
+      </svg>
+      <figcaption>境界は「判断が要るか」で引く。スキーマ変更・命名・トレードオフの決定は Opus に残し、確定した仕様をコードに落とす作業だけを渡す。レビューを通過した Issue には、実装内容・変更ファイル・設計判断の理由を Markdown で書き残してからクローズする。</figcaption>
+    </div>
+  </figure>
+
+  <h3>委譲するサブエージェント(予定)</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>エージェント</th><th>担当</th><th>渡す情報</th></tr></thead>
+      <tbody>
+        <tr><td class="col">laravel-backend</td><td>マイグレーション / モデル / リレーション / コントローラ / FormRequest</td><td>確定したスキーマ定義と受入条件</td></tr>
+        <tr><td class="col">vue-frontend</td><td>Inertia ページ / Vue コンポーネント / Tailwind スタイル</td><td>画面モックと props の型</td></tr>
+        <tr><td class="col">test-writer</td><td>Feature テスト / ProgressionService のユニットテスト</td><td>期待する入出力の表</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>定義ファイルは <code>.claude/agents/</code> に置く。モデルは Sonnet を指定し、各エージェントに Laravel 13 の規約・Pint の整形ルール・このドキュメントの設計方針を読ませた状態で起動する。</p>
+</section>
+
+<!-- ============ 07 ============ -->
+<section id="roadmap">
+  <p class="eyebrow">07 / Issues</p>
+  <h2>GitHub Issue への落とし込み</h2>
+  <p class="lede">既存の汎用 Issue #2〜#4 を筋トレアプリの仕様で具体化し、不足分を追加する。依存の順に並べてあり、上から順に着手できる。</p>
+
+  <div class="road">
+    <div class="road-row head">
+      <span>Issue</span><span>内容</span><span>担当</span><span class="ph">段階</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#3</span>
+      <span>DB設計・マイグレーション作成 — 6テーブル + インデックス</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">基盤</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#2</span>
+      <span>認証機能 — 公式スターターキット導入(Inertia + Vue 3)</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">基盤</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#6</span>
+      <span>Laravel Pint 導入 — 整形ルール確定</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">基盤</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#5</span>
+      <span>CI(GitHub Actions) — Pint チェック + テスト実行</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">基盤</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#7</span>
+      <span>種目マスタのシーダー — 主要30種目に increment とレップレンジを設定</span>
+      <span class="who opus">Opus</span>
+      <span class="ph">中核</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#8</span>
+      <span><strong>ProgressionService</strong> — ダブルプログレッション + 推定1RM、ユニットテスト付き</span>
+      <span class="who opus">Opus</span>
+      <span class="ph">中核</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#9</span>
+      <span>ルーティン(メニュー)管理 — CRUD と種目の並び替え</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">機能</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#10</span>
+      <span>ワークアウト記録画面 — 前回値プリセット / タップ1回確定 / N+1 対策</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">機能</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#11</span>
+      <span>種目別履歴 — 推定1RM推移グラフと全セット一覧</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">機能</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#4</span>
+      <span>ダッシュボード・共通レイアウト — ボリューム / 連続記録 / 直近PR</span>
+      <span class="who sonnet">Sonnet</span>
+      <span class="ph">機能</span>
+    </div>
+    <div class="road-row">
+      <span class="inum">#12</span>
+      <span>サブエージェント構成の整備 — <code>.claude/agents/</code> 定義</span>
+      <span class="who opus">Opus</span>
+      <span class="ph">体制</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>着手順の理由。</strong>スキーマ(#3)が固まらないと他が全部書き直しになるので最優先。Pint と CI を機能実装より前に入れるのは、後から一括整形すると差分が巨大になりレビュー不能になるため。ProgressionService はアプリの価値そのものなので、画面より先にロジックとテストを固める。</p>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Overload — 設計仕様 v1 / 2026-09-05 作成。Laravel 13.30.1 + PHP 8.3 + MySQL 8.0 + Inertia + Vue 3、Docker Compose 上で開発。グラフと画面の数値はすべて仕様説明用のサンプルです。
+  </div>
+</footer>
