@@ -201,9 +201,44 @@ http://localhost/ でログイン: `admin@example.com` / `(パスワードは各
 
 ### 次にやること
 
-1. **#10 ワークアウト記録画面**(セッション2終了時点で実装中だった可能性あり)
-   - 次セッション冒頭で `git status` を確認。未コミットの変更があれば #10 の実装結果
-   - レビュー観点は下記
+1. **#10 ワークアウト記録画面 — 実装が中断した状態で残っている**
+
+   セッション2終了時点でエージェントが実装中だった。**完成しているかは不明。**
+   以下のファイルが未コミットで作業ツリーに残っている:
+
+   ```
+   M  app/app/Models/Workout.php
+   M  app/app/Models/WorkoutSet.php
+   M  app/app/Repositories/WorkoutSetRepository.php
+   M  app/resources/js/Layouts/AuthenticatedLayout.vue
+   M  app/routes/web.php
+   ?? app/app/Http/Controllers/WorkoutController.php
+   ?? app/app/Http/Controllers/WorkoutSetController.php
+   ?? app/app/Http/Requests/{StoreWorkout,StoreWorkoutSet,UpdateWorkoutSet}Request.php
+   ?? app/app/Policies/WorkoutPolicy.php
+   ?? app/app/Services/WorkoutProgressionSnapshotService.php
+   ?? app/database/migrations/2026_09_05_160000_add_progression_snapshot_to_workouts_table.php
+   ?? app/database/migrations/2026_09_05_160100_add_client_request_id_to_workout_sets_table.php
+   ```
+
+   **注意: Vue のページコンポーネント(`resources/js/Pages/Workouts/` など)が
+   まだ存在しない。** 画面側が未完の可能性が高い。
+
+   マイグレーションが2件追加されている点にも注意:
+   - `progression_snapshot` … 提示した目標を記録側に保存する設計と思われる
+   - `client_request_id` … 二重送信防止のための冪等キーと思われる
+
+   いずれも指示に無かった設計判断なので、**採用するか差し戻すかを判断すること。**
+
+   ### 再開手順
+   1. `docker compose up -d` で環境を起動
+   2. `git status` で上記が残っていることを確認
+   3. `docker compose exec php php artisan test` を実行し、現状の通過数を把握
+      (中断前のベースラインは106件)
+   4. `docker compose exec php npm run build` が通るか確認
+   5. 未完なら、残りを実装させるか、`git checkout .` + 未追跡ファイル削除で
+      やり直すかを判断する
+   6. レビュー観点は下記
 2. #17 自重種目の1RM問題 → **#11 の前に方針を決める**
 3. #11 種目別履歴・1RMグラフ
 4. #4 ダッシュボード
