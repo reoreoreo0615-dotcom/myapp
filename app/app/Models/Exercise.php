@@ -5,12 +5,15 @@ namespace App\Models;
 use App\Enums\Equipment;
 use App\Enums\MovementType;
 use App\Enums\MuscleGroup;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Exercise extends Model
 {
+    use HasFactory;
+
     /**
      * The attributes that are mass assignable.
      *

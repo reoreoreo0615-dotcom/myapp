@@ -23,8 +23,16 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- 本番と同じ MySQL でテストする。SQLite は DECIMAL を float として扱い、
+             enum 制約も unsigned も無視するため、このアプリ(decimal の重量計算が根幹)では
+             「テストは通るが本番で挙動が違う」を生む。実測でも SQLite 5.3s / MySQL 10.3s と
+             差は小さく、本番同等で検証する価値の方が大きい。 -->
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_HOST" value="db"/>
+        <env name="DB_PORT" value="3306"/>
+        <env name="DB_DATABASE" value="myapp_testing"/>
+        <env name="DB_USERNAME" value="root"/>
+        <env name="DB_PASSWORD" value="root"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
