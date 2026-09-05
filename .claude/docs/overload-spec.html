@@ -338,6 +338,35 @@ td.typ{font-family:var(--font-mono);font-size:12px;color:var(--text-3);white-spa
 footer{border-top:1px solid var(--border);margin-top:20px;background:var(--surface)}
 footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--text-3)}
 
+/* ---------- mobile ---------- */
+/* 図はコンテナ幅まで縮めず、最低幅を保って横スクロールさせる。
+   スマホで 760px の図を 330px に潰すと軸ラベルが 5px 相当になり読めなくなるため。 */
+.figbox svg{min-width:620px}
+
+@media (max-width:700px){
+  .wrap{padding:0 16px}
+  body{font-size:14.5px}
+  .masthead .wrap{padding-top:26px;padding-bottom:24px}
+  main .wrap{padding-top:34px}
+  section{margin-bottom:46px}
+  .brand{font-size:33px}
+  .tagline{font-size:15.5px;margin-top:14px}
+  h2{font-size:21px}
+  h3{font-size:15px;margin-top:26px}
+  .figbox{padding:14px 14px 10px}
+  .tiles{grid-template-columns:1fr}
+  .tile .v{font-size:24px}
+  .scrollhint{display:block}
+}
+.scrollhint{
+  display:none;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  letter-spacing:.06em;
+  color:var(--text-3);
+  margin:0 0 7px;
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -394,6 +423,7 @@ footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--t
 
   <figure>
     <div class="figbox">
+      <p class="scrollhint">← 横にスクロールできます →</p>
       <svg viewBox="0 0 760 244" role="img" aria-label="前回のトップセットのレップ数が目標レンジ上限に達していれば重量を増やしてレップをリセットし、達していなければ同じ重量でレップを1増やす分岐図">
         <defs>
           <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -451,6 +481,7 @@ footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--t
 
   <figure>
     <div class="figbox">
+      <p class="scrollhint">← 横にスクロールできます →</p>
       <svg viewBox="0 0 620 116" role="img" aria-label="20キロのバーに20キロプレート2枚と1.25キロプレート2枚を装着して62.5キロになることを示したバーベルの図">
         <!-- bar -->
         <rect x="30" y="53" width="560" height="8" rx="4" fill="var(--border-strong)"></rect>
@@ -484,6 +515,7 @@ footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--t
 
   <figure>
     <div class="figbox">
+      <p class="scrollhint">← 横にスクロールできます →</p>
       <svg viewBox="0 0 740 338" role="img" aria-label="usersからworkoutsとroutinesが伸び、workoutsはworkout_setsを持ち、routinesはroutine_exercisesを持ち、その両方がexercisesを参照するER図">
         <defs>
           <marker id="er" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -693,6 +725,7 @@ footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--t
 
       <p class="mocklabel" style="margin-top:26px">③ 種目別履歴 — 推定1RM推移</p>
       <div class="figbox" style="padding:16px 18px 12px">
+        <p class="scrollhint">← 横にスクロールできます →</p>
         <svg viewBox="0 0 720 296" role="img" aria-label="ベンチプレスの推定1RMが13週間で76.0kgから88.8kgまで、のこぎり状に上昇し、第6週から第8週は83.3kgで停滞したことを示す折れ線グラフ">
           <!-- gridlines -->
           <line x1="56" y1="236.25" x2="700" y2="236.25" stroke="currentColor" stroke-width=".6" opacity=".18"></line>
@@ -795,6 +828,7 @@ footer .wrap{padding-top:22px;padding-bottom:34px;font-size:12.5px;color:var(--t
 
   <figure>
     <div class="figbox">
+      <p class="scrollhint">← 横にスクロールできます →</p>
       <svg viewBox="0 0 760 226" role="img" aria-label="Opusが設計しIssueに分解、Sonnetが実装とテストを行い、Opusがレビューして差し戻すか、Issueにマークダウンで記録してクローズする開発サイクル図">
         <defs>
           <marker id="fw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
