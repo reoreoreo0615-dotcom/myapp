@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Exercise;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,6 +78,36 @@ class ProfileTest extends TestCase
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
+    }
+
+    /**
+     * ProfileController@destroy(自己削除)でも DeleteUserService を経由するため、
+     * exercises.user_id が SET NULL だった頃の情報漏洩バグ
+     * (独自種目が既定種目に昇格する)が再発しないことを確認する。
+     */
+    public function test_deleting_own_account_does_not_leak_custom_exercises_as_default_exercises(): void
+    {
+        $user = User::factory()->create();
+        $customExercise = Exercise::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'My Own Secret Exercise',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->delete('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('exercises', [
+            'id' => $customExercise->id,
+        ]);
+        $this->assertDatabaseMissing('exercises', [
+            'name' => 'My Own Secret Exercise',
+            'user_id' => null,
+        ]);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

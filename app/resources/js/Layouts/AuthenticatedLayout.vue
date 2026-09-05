@@ -39,6 +39,13 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     ダッシュボード
                                 </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user.is_admin"
+                                    :href="route('admin.users.index')"
+                                    :active="route().current('admin.*')"
+                                >
+                                    ユーザー管理
+                                </NavLink>
                             </div>
                         </div>
 
@@ -145,6 +152,13 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('dashboard')"
                         >
                             ダッシュボード
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user.is_admin"
+                            :href="route('admin.users.index')"
+                            :active="route().current('admin.*')"
+                        >
+                            ユーザー管理
                         </ResponsiveNavLink>
                     </div>
 
