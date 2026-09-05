@@ -74,3 +74,16 @@
         letter-spacing: 0.12em;
     }
 }
+
+@layer base {
+    /* タッチ端末での 300ms クリック遅延を除去する。
+       遅延があると「押しても反応しない」と感じられるため。 */
+    button,
+    a,
+    [role='button'],
+    input,
+    select,
+    label {
+        touch-action: manipulation;
+    }
+}

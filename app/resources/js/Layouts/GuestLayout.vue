@@ -15,7 +15,7 @@ import { Link } from '@inertiajs/vue3';
             </Link>
         </header>
 
-        <main class="w-full max-w-sm px-6 py-10 sm:mx-auto sm:max-w-md">
+        <main class="mx-auto w-full max-w-sm px-6 py-10 sm:max-w-md">
             <slot />
         </main>
     </div>
