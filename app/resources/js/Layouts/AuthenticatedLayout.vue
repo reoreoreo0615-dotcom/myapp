@@ -55,17 +55,26 @@ const navItems = computed(() => {
 
 <template>
     <div class="flex min-h-screen flex-col bg-ground pb-24 md:pb-0">
+        <!--
+            ヘッダーは全幅で1段。左からアプリ名、ナビ(md以上のみ)、
+            右端にユーザー名とログアウト。
+            画面名(header スロット)は main の先頭に置く。ヘッダーに残すと
+            デスクトップで2段になって縦を食うため。スロットは1箇所でしか
+            描画しない(記録画面のタイマーがスロット内にあり、二重に描くと
+            タイマーが2つ動いてしまう)。
+        -->
         <header class="border-b border-line">
-            <!-- デスクトップ専用: アプリ名 + 横並びナビ(md未満では非表示、下部固定バーを使う) -->
-            <div class="hidden items-center gap-6 border-b border-line px-4 md:flex">
+            <div class="flex items-center gap-4 px-4 py-3">
                 <Link
                     :href="route('dashboard')"
-                    class="flex shrink-0 items-center gap-2 py-3"
+                    class="flex shrink-0 items-center gap-2"
                 >
                     <ApplicationLogo class="h-6 w-6 fill-current text-accent" />
                     <span class="label-micro text-ink">Overload</span>
                 </Link>
-                <ul class="flex items-center gap-1">
+
+                <!-- ナビはデスクトップのみ。md未満は下部固定バーを使う -->
+                <ul class="hidden items-center gap-1 md:flex">
                     <li v-for="item in navItems" :key="item.key">
                         <Link
                             :href="item.href"
@@ -81,23 +90,17 @@ const navItems = computed(() => {
                         </Link>
                     </li>
                 </ul>
-            </div>
 
-            <!-- 上部バーは最小限。画面名 + 画面固有の情報 + ログアウト(全幅共通) -->
-            <div
-                class="flex items-center justify-between gap-4 px-4 py-4"
-            >
-                <div class="min-w-0 flex-1">
-                    <slot name="header" />
-                </div>
-                <div class="flex shrink-0 items-center gap-3">
-                    <span class="label-micro text-ink-3 truncate max-w-24">{{ userName }}</span>
+                <div class="ml-auto flex shrink-0 items-center gap-3">
+                    <span class="label-micro max-w-24 truncate text-ink-3">{{
+                        userName
+                    }}</span>
                     <Link
                         :href="route('logout')"
                         method="post"
                         as="button"
                         type="button"
-                        class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                        class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink active:bg-surface"
                     >
                         ログアウト
                     </Link>
@@ -106,6 +109,12 @@ const navItems = computed(() => {
         </header>
 
         <main class="flex-1 px-4 py-6">
+            <div
+                v-if="$slots.header"
+                class="mb-5 flex items-center justify-between gap-4 border-b border-line pb-4"
+            >
+                <slot name="header" />
+            </div>
             <slot />
         </main>
 
