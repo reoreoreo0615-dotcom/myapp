@@ -88,10 +88,12 @@ jobs:
         working-directory: app
         run: ./vendor/bin/pint --test
 
-      - name: Run tests
-        working-directory: app
-        run: php artisan test
-
       - name: Build frontend assets
         working-directory: app
         run: npm run build
+
+      # ビルド成果物(public/build/manifest.json)が無いと Inertia のページ描画で
+      # 「Vite manifest not found」になり Feature テストが落ちる。必ず build の後に実行する。
+      - name: Run tests
+        working-directory: app
+        run: php artisan test
