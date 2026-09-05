@@ -85,7 +85,7 @@ const showInputs = computed(() => !props.completed || props.editing);
                     <span class="text-ink-3">&times;</span>
                     <span>{{ reps }}</span>
                     <span v-if="warmup" class="label-micro ml-1 text-[10px] text-ink-3">
-                        WU
+                        アップ
                     </span>
                 </div>
                 <span
@@ -151,7 +151,7 @@ const showInputs = computed(() => !props.completed || props.editing);
                 :disabled="processing"
                 @click="editing ? emit('edit-save') : emit('record')"
             >
-                {{ processing ? (editing ? '保存中…' : '記録中…') : editing ? '保存' : '記録' }}
+                {{ processing ? (editing ? '保存中…' : '記録中…') : editing ? '保存' : 'このセットを記録' }}
             </button>
         </div>
     </div>

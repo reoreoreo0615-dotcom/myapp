@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Routine;
+use App\Models\Workout;
 use App\Repositories\WorkoutSetRepository;
 use Illuminate\Support\Carbon;
 
@@ -33,6 +35,8 @@ class DashboardSummaryService
      *     streakWeeks: int,
      *     monthlyRecordUpdates: int,
      *     latestPersonalBest: array{exerciseName: string, isBodyweight: bool, weight: float, reps: int, date: string}|null,
+     *     activeWorkoutId: int|null,
+     *     routinesCount: int,
      * }
      */
     public function build(int $userId): array
@@ -63,6 +67,16 @@ class DashboardSummaryService
                 'reps' => $latestPersonalBest['reps'],
                 'date' => $latestPersonalBest['performed_on'],
             ] : null,
+            // Issue #19: ダッシュボードに「次にやること」を出すための素材。
+            // 表示ラベル・優先順位の判断はフロント側(Dashboard.vue)に置く
+            // (他の集計と同じく、このサービスは事実だけを返す)。
+            'activeWorkoutId' => Workout::query()
+                ->where('user_id', $userId)
+                ->whereNull('finished_at')
+                ->value('id'),
+            'routinesCount' => Routine::query()
+                ->where('user_id', $userId)
+                ->count(),
         ];
     }
 

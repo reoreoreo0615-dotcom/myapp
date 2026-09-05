@@ -8,14 +8,38 @@ import { computed } from 'vue';
 
 const props = defineProps({
     // { hasRecords, weeklyVolume: { thisWeek, lastWeek, changePercent }, streakWeeks,
-    //   monthlyRecordUpdates, latestPersonalBest: { exerciseName, isBodyweight, weight, reps, date } | null }
+    //   monthlyRecordUpdates, latestPersonalBest: { exerciseName, isBodyweight, weight, reps, date } | null,
+    //   activeWorkoutId: number|null, routinesCount: number }
     summary: {
         type: Object,
         required: true,
     },
 });
 
-// 総ボリュームは "12,480" のように桁区切りで表示する(formatNumber は
+// Issue #19: 「メニューを作ってから記録する」という画面間のつながりが
+// 分からない、というフィードバックへの対処。優先順位は3択:
+// 進行中のトレーニングがあれば最優先で再開させ、無ければメニューの
+// 有無で「まず作る」か「もう始める」かを出し分ける。
+const nextAction = computed(() => {
+    if (props.summary.activeWorkoutId) {
+        return {
+            label: 'トレーニングを再開',
+            href: route('workouts.show', props.summary.activeWorkoutId),
+        };
+    }
+    if (props.summary.routinesCount === 0) {
+        return {
+            label: 'まずメニューを作る',
+            href: route('routines.create'),
+        };
+    }
+    return {
+        label: 'トレーニングを始める',
+        href: route('workouts.create'),
+    };
+});
+
+// 総挙上重量は "12,480" のように桁区切りで表示する(formatNumber は
 // 桁区切りをしないため、ダッシュボード専用にここで整形する)。
 function formatVolume(value) {
     return new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 0 }).format(Math.round(value));
@@ -66,27 +90,32 @@ const latestPersonalBest = computed(() => props.summary.latestPersonalBest);
             <h2 class="text-lg font-medium text-ink">ダッシュボード</h2>
         </template>
 
-        <div v-if="!summary.hasRecords" class="mt-12 text-center">
-            <p class="text-sm text-ink-2">まだ記録がありません。</p>
-            <p class="mt-1 text-sm text-ink-2">最初のワークアウトを記録しましょう。</p>
+        <div>
+            <p class="label-micro text-[11px] text-ink-3">次にやること</p>
             <Link
-                :href="route('workouts.create')"
-                class="mt-8 inline-flex h-12 items-center justify-center border border-accent px-6 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-ground"
+                :href="nextAction.href"
+                class="mt-2 flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
             >
-                まず1回記録しよう
+                {{ nextAction.label }}
             </Link>
         </div>
 
-        <div v-else class="grid grid-cols-2 gap-x-6 gap-y-8">
+        <Rule class="mt-8" />
+
+        <div v-if="!summary.hasRecords" class="mt-8 text-center">
+            <p class="text-sm text-ink-2">まだ記録がありません。</p>
+        </div>
+
+        <div v-else class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8">
             <div class="min-w-0">
-                <StatValue label="今週の総ボリューム" :value="formatVolume(summary.weeklyVolume.thisWeek)" unit="kg" />
+                <StatValue label="今週の総挙上重量" :value="formatVolume(summary.weeklyVolume.thisWeek)" unit="kg" />
                 <p v-if="changeLabel" class="label-micro mt-1.5 text-[10px]" :class="changeColorClass">
                     {{ changeLabel }}
                 </p>
             </div>
 
             <div class="min-w-0">
-                <StatValue label="連続トレーニング" :value="summary.streakWeeks" unit="週" />
+                <StatValue label="連続記録" :value="summary.streakWeeks" unit="週" />
             </div>
 
             <div class="min-w-0">

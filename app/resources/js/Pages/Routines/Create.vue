@@ -24,7 +24,11 @@ const submit = () => {
             <h2 class="text-lg font-medium text-ink">メニューを作成</h2>
         </template>
 
-        <form class="space-y-6" @submit.prevent="submit">
+        <p class="text-sm text-ink-2">
+            メニューは、いつも行う種目の組み合わせです。作っておくと、記録開始時に選ぶだけで済みます。
+        </p>
+
+        <form class="mt-6 space-y-6" @submit.prevent="submit">
             <div>
                 <InputLabel for="name" value="メニュー名" />
                 <TextInput

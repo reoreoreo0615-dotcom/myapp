@@ -150,7 +150,7 @@ const formatDate = (value) => {
                 <p class="mt-2 text-sm text-ink-2">
                     <span class="font-medium text-ink">{{ confirmingDeleteUser?.name }}</span>
                     ({{ confirmingDeleteUser?.email }}) を削除すると、
-                    このユーザーのワークアウト記録・ルーティン・独自種目が
+                    このユーザーのワークアウト記録・メニュー・独自種目が
                     すべて完全に削除されます。この操作は取り消せません。
                 </p>
 

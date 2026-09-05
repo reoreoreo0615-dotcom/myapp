@@ -1,11 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Checkbox from '@/Components/Checkbox.vue';
+import FirstTimeTip from '@/Components/FirstTimeTip.vue';
 import Rule from '@/Components/Rule.vue';
 import SetRow from '@/Components/SetRow.vue';
 import TargetDisplay from '@/Components/TargetDisplay.vue';
 import { formatNumber } from '@/Utils/format';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 
 const page = usePage();
@@ -121,6 +122,19 @@ function nextSetNumber(exerciseId) {
 
 const processing = reactive({});
 
+// Issue #19: 記録直後に「何が起きたか」を一言返す。数秒で消える控えめな
+// フィードバックにとどめ、常時表示のノイズにはしない。
+const recordFeedback = reactive({});
+const feedbackTimers = {};
+
+function showRecordFeedback(exerciseId, message) {
+    recordFeedback[exerciseId] = message;
+    clearTimeout(feedbackTimers[exerciseId]);
+    feedbackTimers[exerciseId] = setTimeout(() => {
+        recordFeedback[exerciseId] = null;
+    }, 2500);
+}
+
 function recordSet(exercise) {
     if (processing[exercise.id]) {
         return;
@@ -128,6 +142,7 @@ function recordSet(exercise) {
     processing[exercise.id] = true;
 
     const values = ensureDraft(exercise.id);
+    const setNumber = nextSetNumber(exercise.id);
     const clientRequestId =
         typeof crypto !== 'undefined' && crypto.randomUUID
             ? crypto.randomUUID()
@@ -145,6 +160,9 @@ function recordSet(exercise) {
         {
             preserveScroll: true,
             preserveState: true,
+            onSuccess: () => {
+                showRecordFeedback(exercise.id, `${setNumber}セット目を記録しました`);
+            },
             onFinish: () => {
                 processing[exercise.id] = false;
                 // 目標値は据え置き(セッション中は同じ目標を提示し続ける)。
@@ -202,14 +220,38 @@ function deleteSet(set) {
     });
 }
 
-/* --- 前回セットの表示 --- */
+/* --- 前回との関係で「今日の目標」を説明する1行 ---
+ * 数字だけを並べても、それがアプリの計算結果だという核心のコンセプトが
+ * 伝わらない、というフィードバックへの対処。バックエンドが今日の目標を
+ * 導く際に使ったトップセット(最大重量、同重量ならより多いレップ数)と
+ * 同じ選び方をここでも再現し、目標の数字と食い違わないようにする。
+ */
 
-function prevSetsText(exerciseId) {
+function topPrevSet(exerciseId) {
     const sets = props.progression[exerciseId]?.prev ?? [];
     if (sets.length === 0) {
-        return '前回の記録はありません';
+        return null;
     }
-    return sets.map((set) => `${formatNumber(set.weight)}×${set.reps}`).join(' / ');
+    return [...sets].sort((a, b) => {
+        if (b.weight !== a.weight) {
+            return b.weight - a.weight;
+        }
+        return b.reps - a.reps;
+    })[0];
+}
+
+function progressionMessage(exerciseId) {
+    const target = props.progression[exerciseId]?.target;
+    const top = topPrevSet(exerciseId);
+    if (!target || !top) {
+        return '';
+    }
+    const prevText = `${formatNumber(top.weight)}kg×${top.reps}`;
+    const targetText = `${formatNumber(target.weight)}kg×${target.reps}`;
+    // 重量アップは「レップアップとの違いが分かるように」明示する。
+    return target.type === 'weight'
+        ? `前回 ${prevText} を達成 → 今日は ${targetText} に挑戦(重量が上がりました)`
+        : `前回 ${prevText} を達成 → 今日は ${targetText} に挑戦`;
 }
 
 /* --- 経過時間タイマー(終了済みなら finished_at で止まる) --- */
@@ -230,6 +272,7 @@ onBeforeUnmount(() => {
     if (timerHandle) {
         clearInterval(timerHandle);
     }
+    Object.values(feedbackTimers).forEach((timer) => clearTimeout(timer));
 });
 
 const elapsedText = computed(() => {
@@ -304,9 +347,20 @@ function finishWorkout() {
             {{ page.props.flash.info }}
         </div>
 
-        <div v-if="isFinished" class="label-micro mb-6 border border-line px-4 py-3 text-ink-2">
-            終了済み・閲覧専用
+        <div
+            v-if="isFinished"
+            class="label-micro mb-6 flex flex-wrap items-center justify-between gap-3 border border-line px-4 py-3 text-ink-2"
+        >
+            <span>終了済み・閲覧専用</span>
+            <span class="flex gap-4">
+                <Link :href="route('history.index')" class="text-accent">履歴を見る &rarr;</Link>
+                <Link :href="route('dashboard')" class="text-accent">ダッシュボード &rarr;</Link>
+            </span>
         </div>
+
+        <FirstTimeTip v-if="!isFinished" storage-key="overload:guide:workout-record" class="mb-6">
+            目標の重量・回数は最初から入力されています。そのまま<strong class="text-ink">「記録」</strong>を押せば1セット完了です。長押しで数値をまとめて増減できます。
+        </FirstTimeTip>
 
         <div v-if="visibleExercises.length === 0" class="py-8 text-center text-sm text-ink-2">
             記録する種目がありません。下から種目を追加してください。
@@ -320,7 +374,9 @@ function finishWorkout() {
                         {{ muscleGroupLabels[exercise.muscle_group] ?? exercise.muscle_group }}
                     </span>
                 </div>
-                <p class="mt-1 text-sm text-ink-2">前回: {{ prevSetsText(exercise.id) }}</p>
+                <p v-if="progression[exercise.id]?.target" class="mt-1 text-sm text-ink-2">
+                    {{ progressionMessage(exercise.id) }}
+                </p>
 
                 <TargetDisplay
                     v-if="progression[exercise.id]?.target"
@@ -370,12 +426,16 @@ function finishWorkout() {
                     />
                 </div>
 
+                <p v-if="recordFeedback[exercise.id]" class="label-micro mt-2 text-[10px] text-ok">
+                    {{ recordFeedback[exercise.id] }}
+                </p>
+
                 <label
                     v-if="!isFinished && draft[exercise.id]"
                     class="mt-2 flex h-11 items-center gap-2 text-sm text-ink-2"
                 >
                     <Checkbox v-model:checked="draft[exercise.id].isWarmup" />
-                    次のセットをウォームアップとして記録する
+                    次のセットをウォームアップとして記録する(アップ)
                 </label>
             </section>
         </div>

@@ -4,7 +4,7 @@ import ExerciseHistoryChart from '@/Components/ExerciseHistoryChart.vue';
 import Rule from '@/Components/Rule.vue';
 import StatValue from '@/Components/StatValue.vue';
 import { formatNumber } from '@/Utils/format';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -117,7 +117,11 @@ const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps
         <div v-else class="mt-6">
             <h3 class="truncate font-medium text-ink">{{ history.exercise.name }}</h3>
             <p class="label-micro mt-1 text-[10px] text-ink-3">
-                {{ isBodyweightMetric ? '自重種目・トップセットのレップ数で推移を表示' : '推定1RM(Epley式)の推移' }}
+                {{
+                    isBodyweightMetric
+                        ? '自重種目・トップセットのレップ数で推移を表示'
+                        : '推定1RM(1回だけ挙げられる重さの目安)の推移'
+                }}
             </p>
 
             <Rule class="mt-4" />
@@ -150,7 +154,12 @@ const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps
                     unit="kg"
                 />
             </div>
-            <p v-else class="mt-4 text-sm text-ink-2">この期間の記録がまだありません。</p>
+            <div v-else class="mt-4 text-sm text-ink-2">
+                <p>この期間の記録がまだありません。</p>
+                <Link :href="route('workouts.create')" class="mt-2 inline-block text-accent underline underline-offset-2">
+                    まず記録する &rarr;
+                </Link>
+            </div>
 
             <Rule class="mt-4" />
 
@@ -179,7 +188,7 @@ const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps
                         <span class="flex-1 text-right tabular-nums text-ink">{{ formatNumber(set.weight) }}<span class="text-ink-2">kg</span></span>
                         <span class="flex-1 text-right tabular-nums text-ink">{{ set.reps }}<span class="text-ink-2">回</span></span>
                         <span class="w-14 shrink-0 text-right tabular-nums text-ink-2">{{ set.rpe !== null ? formatNumber(set.rpe) : '—' }}</span>
-                        <span class="label-micro w-10 shrink-0 text-right text-[9px] text-ink-3">{{ set.is_warmup ? 'W' : '' }}</span>
+                        <span class="label-micro w-12 shrink-0 text-right text-[9px] text-ink-3">{{ set.is_warmup ? 'アップ' : '' }}</span>
                     </div>
                 </div>
             </div>

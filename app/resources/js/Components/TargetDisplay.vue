@@ -5,7 +5,7 @@ import { formatNumber } from '@/Utils/format';
 const props = defineProps({
     label: {
         type: String,
-        default: 'TARGET',
+        default: '目標',
     },
     weight: {
         type: Number,
