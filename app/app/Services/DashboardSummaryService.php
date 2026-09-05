@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Routine;
 use App\Models\Workout;
+use App\Repositories\BodyLogRepository;
 use App\Repositories\WorkoutSetRepository;
 use Illuminate\Support\Carbon;
 
@@ -26,6 +27,7 @@ class DashboardSummaryService
 {
     public function __construct(
         private readonly WorkoutSetRepository $workoutSetRepository,
+        private readonly BodyLogRepository $bodyLogRepository,
     ) {}
 
     /**
@@ -37,6 +39,7 @@ class DashboardSummaryService
      *     latestPersonalBest: array{exerciseName: string, isBodyweight: bool, weight: float, reps: int, date: string}|null,
      *     activeWorkoutId: int|null,
      *     routinesCount: int,
+     *     bodyWeight: array{current: float, measuredOn: string, changeFromPrevious: float|null}|null,
      * }
      */
     public function build(int $userId): array
@@ -77,6 +80,28 @@ class DashboardSummaryService
             'routinesCount' => Routine::query()
                 ->where('user_id', $userId)
                 ->count(),
+            // Issue #21: 現在の体重と直近の変化。
+            'bodyWeight' => $this->buildBodyWeightTile($userId),
+        ];
+    }
+
+    /**
+     * @return array{current: float, measuredOn: string, changeFromPrevious: float|null}|null
+     */
+    private function buildBodyWeightTile(int $userId): ?array
+    {
+        $latestTwo = $this->bodyLogRepository->latestTwoForUser($userId);
+
+        if ($latestTwo === []) {
+            return null;
+        }
+
+        return [
+            'current' => $latestTwo[0]['weight_kg'],
+            'measuredOn' => $latestTwo[0]['measured_on'],
+            'changeFromPrevious' => isset($latestTwo[1])
+                ? round($latestTwo[0]['weight_kg'] - $latestTwo[1]['weight_kg'], 2)
+                : null,
         ];
     }
 

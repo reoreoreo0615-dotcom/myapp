@@ -55,4 +55,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Exercise::class);
     }
+
+    /**
+     * The body weight / body fat measurements logged by this user.
+     */
+    public function bodyLogs(): HasMany
+    {
+        return $this->hasMany(BodyLog::class);
+    }
 }

@@ -20,7 +20,11 @@ class DeleteUserService
      *  1. workouts    → cascades to workout_sets
      *  2. routines    → cascades to routine_exercises
      *  3. exercises   → now safe, since workout_sets are already gone
-     *  4. the user
+     *  4. body_logs   → no dependents; order relative to the others doesn't
+     *                   matter, but it must happen before the user row is
+     *                   gone (Issue #21, following the #13 pattern so no
+     *                   orphaned body_logs row survives the user).
+     *  5. the user
      */
     public function delete(User $user): void
     {
@@ -28,6 +32,7 @@ class DeleteUserService
             $user->workouts()->delete();
             $user->routines()->delete();
             $user->exercises()->delete();
+            $user->bodyLogs()->delete();
             $user->delete();
         });
     }

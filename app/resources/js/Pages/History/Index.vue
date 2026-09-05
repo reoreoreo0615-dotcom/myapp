@@ -22,7 +22,8 @@ const props = defineProps({
         type: [Number, String, null],
         default: null,
     },
-    // null、または { exercise, chart: {metric, metric_label, points}, sets, personalBest }
+    // null、または { exercise, chart: {metric, metric_label, points}, sets, personalBest,
+    //   latestBodyweightRatio: {date, ratio, body_weight_kg, estimated_one_rep_max_with_bodyweight} | null }
     history: {
         type: Object,
         default: null,
@@ -68,6 +69,12 @@ function selectPeriod(value) {
 }
 
 const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps');
+
+// 'YYYY-MM-DD' -> '9/3'(Dashboard.vue と同じ整形)
+function formatMonthDay(isoDate) {
+    const [, month, day] = isoDate.split('-');
+    return `${Number(month)}/${Number(day)}`;
+}
 </script>
 
 <template>
@@ -78,7 +85,30 @@ const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps
             <h2 class="text-lg font-medium text-ink">履歴</h2>
         </template>
 
-        <div>
+        <!--
+            体重記録(Issue #21)への導線。下部固定ナビにこれ以上項目を増やすと
+            375px 幅で窮屈になるため追加せず、関連性の高いこの履歴画面に
+            「タブ」として置く(体重画面側にも同じタブを置いて行き来できる)。
+        -->
+        <div class="flex border-b border-line" role="tablist">
+            <span
+                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-accent text-center text-accent"
+                role="tab"
+                aria-selected="true"
+            >
+                種目別
+            </span>
+            <Link
+                :href="route('body-logs.index')"
+                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-transparent text-center text-ink-2 transition-colors hover:text-ink"
+                role="tab"
+                aria-selected="false"
+            >
+                体重
+            </Link>
+        </div>
+
+        <div class="mt-4">
             <label class="label-micro block text-[11px] text-ink-3" for="history-exercise">種目</label>
             <select
                 id="history-exercise"
@@ -158,6 +188,40 @@ const isBodyweightMetric = computed(() => props.history?.chart?.metric === 'reps
                 <p>この期間の記録がまだありません。</p>
                 <Link :href="route('workouts.create')" class="mt-2 inline-block text-accent underline underline-offset-2">
                     まず記録する &rarr;
+                </Link>
+            </div>
+
+            <Rule class="mt-4" />
+
+            <!-- 体重比(Issue #21): 筋力の数字は体重を抜きにしては解釈できない、という
+                 このアプリの前提を反映する表示。体重記録が無い期間は出さない。 -->
+            <div v-if="history.latestBodyweightRatio" class="mt-4">
+                <div class="flex flex-wrap gap-x-6 gap-y-4">
+                    <StatValue
+                        label="体重比"
+                        :value="history.latestBodyweightRatio.ratio"
+                        unit="倍"
+                        accent
+                    />
+                    <StatValue
+                        v-if="isBodyweightMetric"
+                        label="体重+加重の概算1RM"
+                        :value="history.latestBodyweightRatio.estimated_one_rep_max_with_bodyweight"
+                        unit="kg"
+                    />
+                </div>
+                <p class="label-micro mt-2 text-[10px] text-ink-3">
+                    {{ formatMonthDay(history.latestBodyweightRatio.date) }}時点の体重
+                    {{ formatNumber(history.latestBodyweightRatio.body_weight_kg) }}kg を使用。
+                    <template v-if="isBodyweightMetric">
+                        体重の全部が乗る前提の概算です(懸垂・ディップスなど一部の種目にのみ正確)。
+                    </template>
+                </p>
+            </div>
+            <div v-else class="mt-4 text-sm text-ink-2">
+                <p>体重を記録すると、体重比(相対筋力)が表示されます。</p>
+                <Link :href="route('body-logs.index')" class="mt-2 inline-block text-accent underline underline-offset-2">
+                    体重を記録する &rarr;
                 </Link>
             </div>
 

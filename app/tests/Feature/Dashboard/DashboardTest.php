@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Dashboard;
 
+use App\Models\BodyLog;
 use App\Models\Exercise;
 use App\Models\User;
 use App\Models\Workout;
@@ -377,6 +378,58 @@ class DashboardTest extends TestCase
             ->where('summary.latestPersonalBest.weight', $this->sameNumber(120.0))
             ->where('summary.latestPersonalBest.date', '2026-08-01')
         );
+    }
+
+    // ------------------------------------------------------------------
+    // 体重タイル(Issue #21)
+    // ------------------------------------------------------------------
+
+    public function test_body_weight_tile_is_null_when_no_logs_exist(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.bodyWeight', null));
+    }
+
+    public function test_body_weight_tile_shows_current_weight_and_change_from_previous(): void
+    {
+        $user = User::factory()->create();
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-08-27', 'weight_kg' => 71.0]);
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-09-03', 'weight_kg' => 70.2]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.bodyWeight.current', $this->sameNumber(70.2))
+            ->where('summary.bodyWeight.measuredOn', '2026-09-03')
+            ->where('summary.bodyWeight.changeFromPrevious', $this->sameNumber(-0.8))
+        );
+    }
+
+    public function test_body_weight_tile_has_no_change_with_only_one_log(): void
+    {
+        $user = User::factory()->create();
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-09-03', 'weight_kg' => 70.0]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.bodyWeight.current', $this->sameNumber(70.0))
+            ->where('summary.bodyWeight.changeFromPrevious', null)
+        );
+    }
+
+    public function test_body_weight_tile_does_not_leak_another_users_logs(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        BodyLog::factory()->create(['user_id' => $otherUser->id, 'measured_on' => '2026-09-03', 'weight_kg' => 999.0]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.bodyWeight', null));
     }
 
     // ------------------------------------------------------------------

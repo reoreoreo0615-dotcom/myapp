@@ -3,27 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exercise;
+use App\Repositories\BodyLogRepository;
 use App\Repositories\WorkoutSetRepository;
 use App\Services\ExerciseHistoryService;
+use App\Support\HistoryPeriod;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HistoryController extends Controller
 {
-    /**
-     * 期間フィルタの選択肢とその月数。'all' は下限日付なし(月数 null)。
-     *
-     * @var array<string, int|null>
-     */
-    private const PERIOD_MONTHS = [
-        '3m' => 3,
-        '6m' => 6,
-        'all' => null,
-    ];
-
     public function __construct(
         private readonly WorkoutSetRepository $workoutSetRepository,
+        private readonly BodyLogRepository $bodyLogRepository,
         private readonly ExerciseHistoryService $historyService,
     ) {}
 
@@ -56,10 +48,7 @@ class HistoryController extends Controller
             ])
             ->values();
 
-        $period = $request->string('period')->toString();
-        if (! array_key_exists($period, self::PERIOD_MONTHS)) {
-            $period = 'all';
-        }
+        $period = HistoryPeriod::normalize($request->string('period')->toString());
 
         $exerciseId = $request->integer('exercise_id') ?: null;
         $selected = null;
@@ -69,12 +58,18 @@ class HistoryController extends Controller
                 ->where(fn ($query) => $query->whereNull('user_id')->orWhere('user_id', $userId))
                 ->findOrFail($exerciseId);
 
-            $months = self::PERIOD_MONTHS[$period];
-            $sinceDate = $months !== null ? now()->subMonths($months)->toDateString() : null;
+            $sinceDate = HistoryPeriod::sinceDate($period);
 
             $topSets = $this->workoutSetRepository->historyTopSetsPerWorkout($userId, $exercise->id, $sinceDate);
             $allSets = $this->workoutSetRepository->historyAllSets($userId, $exercise->id, $sinceDate);
             $personalBestRaw = $this->workoutSetRepository->personalBest($userId, $exercise->id);
+
+            // 体重比(Issue #21)の算出には、期間フィルタの外にある体重記録も要る
+            // (フィルタで直近3ヶ月に絞っていても、「直近過去の体重」はそれより
+            // 前の記録かもしれないため)。よって全期間・昇順で取得する。
+            $bodyLogs = $this->bodyLogRepository->allMeasurementsAscending($userId);
+
+            $chart = $this->historyService->buildChart($exercise->is_bodyweight, $topSets, $bodyLogs);
 
             $selected = [
                 'exercise' => [
@@ -83,9 +78,10 @@ class HistoryController extends Controller
                     'muscle_group' => $exercise->muscle_group->value,
                     'is_bodyweight' => $exercise->is_bodyweight,
                 ],
-                'chart' => $this->historyService->buildChart($exercise->is_bodyweight, $topSets),
+                'chart' => $chart,
                 'sets' => $allSets,
                 'personalBest' => $this->historyService->buildPersonalBest($exercise->is_bodyweight, $personalBestRaw),
+                'latestBodyweightRatio' => $this->historyService->latestBodyweightRatio($chart['points']),
             ];
         }
 

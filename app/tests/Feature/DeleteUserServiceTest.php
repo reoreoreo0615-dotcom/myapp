@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BodyLog;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
@@ -128,6 +129,34 @@ class DeleteUserServiceTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
         $this->assertDatabaseMissing('exercises', ['id' => $exercise->id]);
+    }
+
+    /**
+     * Issue #21: body_logs も他のユーザー資源と同じく、ユーザー削除時に
+     * 孤児レコードとして残らず削除されなければならない。
+     */
+    public function test_deleting_a_user_removes_their_body_logs(): void
+    {
+        $user = User::factory()->create();
+        $bodyLog = BodyLog::factory()->create(['user_id' => $user->id]);
+
+        $this->service->delete($user);
+
+        $this->assertDatabaseMissing('body_logs', ['id' => $bodyLog->id]);
+    }
+
+    /**
+     * 他ユーザーの体重記録は、削除対象と無関係であれば残ること。
+     */
+    public function test_deleting_a_user_does_not_remove_another_users_body_logs(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $otherBodyLog = BodyLog::factory()->create(['user_id' => $otherUser->id]);
+
+        $this->service->delete($user);
+
+        $this->assertDatabaseHas('body_logs', ['id' => $otherBodyLog->id]);
     }
 
     public function test_deleting_a_user_removes_the_user_itself(): void

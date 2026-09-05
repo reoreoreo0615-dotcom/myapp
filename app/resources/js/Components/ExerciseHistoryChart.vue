@@ -8,7 +8,9 @@ const props = defineProps({
         type: Array,
         required: true,
     },
-    // '1rm' | 'reps'
+    // '1rm' | 'reps' | 'weight' など。'reps' のときだけレップ数専用の
+    // 表示分岐が効く。それ以外は既定で「推定1RM」文言を使うが、label を
+    // 渡すとそちらを使う(体重推移グラフでの再利用向け。Issue #21)。
     metric: {
         type: String,
         required: true,
@@ -16,6 +18,13 @@ const props = defineProps({
     unit: {
         type: String,
         default: 'kg',
+    },
+    // 例: '体重'。指定すると tooltip / 終点ラベル / aria-label の文言に
+    // 「推定1RM」の代わりにこちらを使う。種目別履歴以外(体重推移)で
+    // このコンポーネントを再利用するための最小限の拡張。
+    label: {
+        type: String,
+        default: null,
     },
 });
 
@@ -115,6 +124,9 @@ function shortDate(dateStr) {
 }
 
 function tooltipFor(point) {
+    if (props.label) {
+        return `${point.date} ${props.label} ${formatNumber(point.value)}${props.unit}`;
+    }
     const base = props.metric === 'reps' ? `${point.reps}回` : `推定1RM ${formatNumber(point.value)}kg`;
     const weightNote = point.weight > 0 ? `(加重 ${formatNumber(point.weight)}kg)` : '';
     return `${point.date} ${base}${weightNote}`;
@@ -137,7 +149,7 @@ const lastIndex = computed(() => props.points.length - 1);
             :width="chartWidth"
             :height="chartHeight"
             role="img"
-            :aria-label="`${metric === 'reps' ? 'レップ数' : '推定1RM'}の推移グラフ`"
+            :aria-label="`${label ?? (metric === 'reps' ? 'レップ数' : '推定1RM')}の推移グラフ`"
         >
             <!-- gridlines -->
             <g v-for="(line, i) in gridLines" :key="i">
@@ -209,7 +221,7 @@ const lastIndex = computed(() => props.points.length - 1);
                 fill="var(--color-accent)"
                 class="font-display tabular-nums"
             >
-                {{ formatNumber(points[lastIndex].value) }}{{ metric === 'reps' ? '回' : 'kg' }}
+                {{ formatNumber(points[lastIndex].value) }}{{ label ? unit : (metric === 'reps' ? '回' : 'kg') }}
             </text>
 
             <!-- x axis -->

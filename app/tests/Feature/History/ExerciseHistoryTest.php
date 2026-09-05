@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\History;
 
+use App\Models\BodyLog;
 use App\Models\Exercise;
 use App\Models\User;
 use App\Models\Workout;
@@ -417,6 +418,138 @@ class ExerciseHistoryTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->where('history.sets.0.date', '2026-09-01')
             ->where('history.sets.1.date', '2026-08-01')
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // 体重比(Issue #21)
+    // ------------------------------------------------------------------
+
+    public function test_bodyweight_ratio_is_null_when_no_body_log_exists(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 68.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.points.0.bodyweight_ratio', null)
+            ->where('history.chart.points.0.body_weight_kg', null)
+            ->where('history.latestBodyweightRatio', null)
+        );
+    }
+
+    public function test_bodyweight_ratio_uses_the_nearest_past_body_log(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-08-25', 'weight_kg' => 68.0]);
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-09-05', 'weight_kg' => 66.0]);
+
+        // 2026-09-01のワークアウトに一番近い過去の体重は8/25の68.0kg(9/5はまだ先)。
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 80.0, 'reps' => 5]]);
+
+        $expectedOneRepMax = (new ProgressionService)->estimateOneRepMax(80.0, 5);
+        $expectedRatio = round($expectedOneRepMax / 68.0, 2);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.points.0.body_weight_kg', $this->sameNumber(68.0))
+            ->where('history.chart.points.0.bodyweight_ratio', $this->sameNumber($expectedRatio))
+            ->where('history.latestBodyweightRatio.ratio', $this->sameNumber($expectedRatio))
+            ->where('history.latestBodyweightRatio.body_weight_kg', $this->sameNumber(68.0))
+        );
+    }
+
+    public function test_bodyweight_ratio_uses_same_day_body_log_when_available(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-09-01', 'weight_kg' => 70.0]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 70.0, 'reps' => 1]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.points.0.body_weight_kg', $this->sameNumber(70.0))
+            ->where('history.chart.points.0.bodyweight_ratio', $this->sameNumber(1.0))
+        );
+    }
+
+    /**
+     * 体重の記録が無い期間は体重比を出さない(受入条件)。記録がある期間だけ
+     * 値が入り、それより前の期間は null のままであること。
+     */
+    public function test_bodyweight_ratio_is_null_before_the_first_body_log_but_present_after(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-01', [['weight' => 60.0, 'reps' => 8]]);
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-08-15', 'weight_kg' => 65.0]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 65.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', [
+            'exercise_id' => $exercise->id,
+            'period' => 'all',
+        ]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.points.0.bodyweight_ratio', null)
+            ->where('history.chart.points.1.bodyweight_ratio', function ($value) {
+                return $value !== null;
+            })
+        );
+    }
+
+    /**
+     * 自重種目: 体重記録がある場合のみ、「体重+加重」の概算1RM(係数1.0)を
+     * 補助情報として併記する。
+     */
+    public function test_bodyweight_exercise_carries_an_auxiliary_estimated_one_rep_max_when_body_weight_is_known(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => true]);
+
+        BodyLog::factory()->create(['user_id' => $user->id, 'measured_on' => '2026-08-25', 'weight_kg' => 70.0]);
+        // 加重懸垂: 5kg 吊るして8回。実質的な負荷 = 70 + 5 = 75kg。
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 5.0, 'reps' => 8]]);
+
+        $expectedEffectiveOneRepMax = (new ProgressionService)->estimateOneRepMax(75.0, 8);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.metric', 'reps') // Issue #17 の方針は維持(主軸はレップ数のまま)
+            ->where(
+                'history.chart.points.0.estimated_one_rep_max_with_bodyweight',
+                $this->sameNumber($expectedEffectiveOneRepMax)
+            )
+            ->where(
+                'history.chart.points.0.bodyweight_ratio',
+                $this->sameNumber(round($expectedEffectiveOneRepMax / 70.0, 2))
+            )
+        );
+    }
+
+    public function test_bodyweight_ratio_does_not_leak_another_users_body_log(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+
+        BodyLog::factory()->create(['user_id' => $otherUser->id, 'measured_on' => '2026-08-25', 'weight_kg' => 999.0]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-09-01', [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.chart.points.0.body_weight_kg', null)
+            ->where('history.chart.points.0.bodyweight_ratio', null)
         );
     }
 

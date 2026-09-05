@@ -9,7 +9,8 @@ import { computed } from 'vue';
 const props = defineProps({
     // { hasRecords, weeklyVolume: { thisWeek, lastWeek, changePercent }, streakWeeks,
     //   monthlyRecordUpdates, latestPersonalBest: { exerciseName, isBodyweight, weight, reps, date } | null,
-    //   activeWorkoutId: number|null, routinesCount: number }
+    //   activeWorkoutId: number|null, routinesCount: number,
+    //   bodyWeight: { current, measuredOn, changeFromPrevious } | null }
     summary: {
         type: Object,
         required: true,
@@ -80,6 +81,18 @@ const changeColorClass = computed(() => {
 });
 
 const latestPersonalBest = computed(() => props.summary.latestPersonalBest);
+
+// Issue #21: 体重タイル。増減そのものに良し悪しは無い(増量期か減量期かで
+// 意味が逆になる)ため、ok/warn は使わず中立色で「事実」だけを示す。
+const bodyWeightChange = computed(() => props.summary.bodyWeight?.changeFromPrevious ?? null);
+
+const bodyWeightChangeLabel = computed(() => {
+    if (bodyWeightChange.value === null) {
+        return '前回の記録なし';
+    }
+    const sign = bodyWeightChange.value > 0 ? '+' : '';
+    return `前回から ${sign}${formatNumber(bodyWeightChange.value)}kg`;
+});
 </script>
 
 <template>
@@ -97,6 +110,37 @@ const latestPersonalBest = computed(() => props.summary.latestPersonalBest);
                 class="mt-2 flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
             >
                 {{ nextAction.label }}
+            </Link>
+        </div>
+
+        <Rule class="mt-8" />
+
+        <!--
+            体重タイル(Issue #21)。下部固定ナビを増やさず、ここからの導線
+            (と履歴画面のタブ)で体重記録画面に行けるようにしている。
+            ワークアウト記録の有無とは無関係に、体重だけ先に記録している
+            ユーザーもいるため hasRecords の外に置く。
+        -->
+        <div class="mt-8">
+            <div v-if="summary.bodyWeight" class="flex items-end justify-between gap-4">
+                <div class="min-w-0">
+                    <StatValue label="体重" :value="summary.bodyWeight.current" unit="kg" />
+                    <p class="label-micro mt-1.5 text-[10px] text-ink-2">{{ bodyWeightChangeLabel }}</p>
+                </div>
+                <Link
+                    :href="route('body-logs.index')"
+                    class="label-micro flex h-11 shrink-0 items-center border border-line px-4 text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
+                >
+                    記録する
+                </Link>
+            </div>
+            <Link
+                v-else
+                :href="route('body-logs.index')"
+                class="flex h-12 items-center justify-between border border-line px-4 text-sm text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
+            >
+                <span>体重を記録する</span>
+                <span aria-hidden="true">&rarr;</span>
             </Link>
         </div>
 
