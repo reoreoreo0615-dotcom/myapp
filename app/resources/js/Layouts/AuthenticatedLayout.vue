@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 const page = usePage();
 const isAdmin = computed(() => page.props.auth.user.is_admin);
@@ -53,25 +54,54 @@ const navItems = computed(() => {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-ground pb-24">
-        <!-- 上部バーは最小限。画面名 + 画面固有の情報 + ログアウト -->
-        <header
-            class="flex items-center justify-between gap-4 border-b border-line px-4 py-4"
-        >
-            <div class="min-w-0 flex-1">
-                <slot name="header" />
-            </div>
-            <div class="flex shrink-0 items-center gap-3">
-                <span class="label-micro text-ink-3 truncate max-w-24">{{ userName }}</span>
+    <div class="flex min-h-screen flex-col bg-ground pb-24 md:pb-0">
+        <header class="border-b border-line">
+            <!-- デスクトップ専用: アプリ名 + 横並びナビ(md未満では非表示、下部固定バーを使う) -->
+            <div class="hidden items-center gap-6 border-b border-line px-4 md:flex">
                 <Link
-                    :href="route('logout')"
-                    method="post"
-                    as="button"
-                    type="button"
-                    class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                    :href="route('dashboard')"
+                    class="flex shrink-0 items-center gap-2 py-3"
                 >
-                    ログアウト
+                    <ApplicationLogo class="h-6 w-6 fill-current text-accent" />
+                    <span class="label-micro text-ink">Overload</span>
                 </Link>
+                <ul class="flex items-center gap-1">
+                    <li v-for="item in navItems" :key="item.key">
+                        <Link
+                            :href="item.href"
+                            class="label-micro flex h-11 items-center border-b-2 px-3 transition-colors"
+                            :class="
+                                item.active
+                                    ? 'border-accent text-accent'
+                                    : 'border-transparent text-ink-2 hover:text-ink'
+                            "
+                            :aria-current="item.active ? 'page' : undefined"
+                        >
+                            {{ item.label }}
+                        </Link>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 上部バーは最小限。画面名 + 画面固有の情報 + ログアウト(全幅共通) -->
+            <div
+                class="flex items-center justify-between gap-4 px-4 py-4"
+            >
+                <div class="min-w-0 flex-1">
+                    <slot name="header" />
+                </div>
+                <div class="flex shrink-0 items-center gap-3">
+                    <span class="label-micro text-ink-3 truncate max-w-24">{{ userName }}</span>
+                    <Link
+                        :href="route('logout')"
+                        method="post"
+                        as="button"
+                        type="button"
+                        class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                    >
+                        ログアウト
+                    </Link>
+                </div>
             </div>
         </header>
 
@@ -79,9 +109,9 @@ const navItems = computed(() => {
             <slot />
         </main>
 
-        <!-- 下部固定ナビ(スマホの親指が届く位置) -->
+        <!-- 下部固定ナビ(スマホの親指が届く位置)。md以上ではヘッダーのナビに切り替える -->
         <nav
-            class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface"
+            class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface md:hidden"
             style="padding-bottom: env(safe-area-inset-bottom)"
         >
             <ul class="flex">
