@@ -75,6 +75,40 @@ class AdminUserManagementTest extends TestCase
         ]);
     }
 
+    public function test_last_admin_cannot_be_deleted(): void
+    {
+        // Only one admin exists. The admin "destroy" route requires the
+        // acting user to be an admin (EnsureUserIsAdmin middleware), so the
+        // only way to reach a "delete the last admin" request at all is for
+        // the last admin to target themselves. This test asserts that the
+        // deletion is rejected because of the last-admin rule specifically
+        // (the flash message), not merely as a side effect of the
+        // self-delete guard — those two checks are independent, and the
+        // last-admin check runs first in the controller.
+        $lastAdmin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this
+            ->actingAs($lastAdmin)
+            ->delete("/admin/users/{$lastAdmin->id}");
+
+        $response->assertRedirect(route('admin.users.index'));
+        $response->assertSessionHas('error', '最後の管理者を削除することはできません。');
+        $this->assertNotNull($lastAdmin->fresh());
+    }
+
+    public function test_admin_can_be_deleted_when_another_admin_remains(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $otherAdmin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this
+            ->actingAs($admin)
+            ->delete("/admin/users/{$otherAdmin->id}");
+
+        $response->assertRedirect(route('admin.users.index'));
+        $this->assertNull($otherAdmin->fresh());
+    }
+
     public function test_last_admin_cannot_have_admin_privileges_revoked(): void
     {
         // Only one admin exists. Revoking their own admin flag would leave

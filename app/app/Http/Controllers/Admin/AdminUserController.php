@@ -65,6 +65,19 @@ class AdminUserController extends Controller
      */
     public function destroy(Request $request, User $user, DeleteUserService $deleteUserService): RedirectResponse
     {
+        // Independent of the self-delete guard below: deleting a user must
+        // never bring the number of admins to zero. This is checked directly
+        // (rather than relying on the self-delete guard as a side effect) so
+        // that future changes to the self-delete rule cannot reopen this
+        // hole. See Issue #15.
+        $wouldLeaveNoAdmins = $user->is_admin
+            && User::where('is_admin', true)->count() <= 1;
+
+        if ($wouldLeaveNoAdmins) {
+            return Redirect::route('admin.users.index')
+                ->with('error', '最後の管理者を削除することはできません。');
+        }
+
         if ($request->user()->is($user)) {
             return Redirect::route('admin.users.index')
                 ->with('error', '自分自身を削除することはできません。');
