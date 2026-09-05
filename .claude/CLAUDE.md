@@ -61,6 +61,9 @@ myapp/
 ### Issue 運用(Claude に一任されている)
 
 - Issue の新規作成・更新・クローズは自分の判断で行ってよい。
+- **Issue を新規作成したら必ず `reoreoreo0615-dotcom` をアサインする。**
+  `gh issue create ... --assignee reoreoreo0615-dotcom`
+- コミット・push は確認を取らずに実行してよい(リポジトリは Private)。
 - **対応完了時は、対象 Issue のコメントに Markdown 形式で作業記録を投稿してからクローズする。**
 - 同じ内容を `.claude/worklog/issue-<番号>_<YYYY-MM-DD>.md` にも保存する。
 
