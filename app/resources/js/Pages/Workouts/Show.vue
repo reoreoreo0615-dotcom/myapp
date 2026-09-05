@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import FirstTimeTip from '@/Components/FirstTimeTip.vue';
+import IntervalTimer from '@/Components/IntervalTimer.vue';
 import Rule from '@/Components/Rule.vue';
 import SetRow from '@/Components/SetRow.vue';
 import TargetDisplay from '@/Components/TargetDisplay.vue';
@@ -110,6 +111,22 @@ for (const exercise of visibleExercises.value) {
     ensureDraft(exercise.id);
 }
 
+/* --- インターバルタイマー(Issue #20) ---
+ * 「セットを記録した瞬間」に自動で休憩タイマーを始める。既定の休憩秒数は
+ * 種目の性質(種目マスタの target_rep_max)から決める:
+ * コンパウンド(<=10)は180秒、アイソレーション(>10)は90秒。
+ * ワークアウト単位の単一タイマーとして扱う(直近に記録したセットの休憩を
+ * 計るのが目的なので、別種目のセットを記録したらその種目の既定値で
+ * 上書きしてよい)。
+ */
+
+function defaultRestSeconds(exercise) {
+    return (exercise.target_rep_max ?? 12) <= 10 ? 180 : 90;
+}
+
+const timerRef = ref(null);
+const timerBarVisible = ref(false);
+
 function nextSetNumber(exerciseId) {
     const sets = props.recordedSets[exerciseId] ?? [];
     if (sets.length === 0) {
@@ -162,6 +179,7 @@ function recordSet(exercise) {
             preserveState: true,
             onSuccess: () => {
                 showRecordFeedback(exercise.id, `${setNumber}セット目を記録しました`);
+                timerRef.value?.start(defaultRestSeconds(exercise));
             },
             onFinish: () => {
                 processing[exercise.id] = false;
@@ -308,6 +326,9 @@ function finishWorkout() {
         {},
         {
             preserveScroll: true,
+            onSuccess: () => {
+                timerRef.value?.clear();
+            },
             onFinish: () => {
                 finishing.value = false;
             },
@@ -491,5 +512,15 @@ function finishWorkout() {
                 + 種目を追加
             </button>
         </template>
+
+        <!-- 休憩タイマーの固定バーの分だけ、末尾コンテンツが隠れないよう空ける -->
+        <div v-if="timerBarVisible" class="h-24" aria-hidden="true" />
     </AuthenticatedLayout>
+
+    <IntervalTimer
+        v-if="!isFinished"
+        ref="timerRef"
+        :workout-id="workout.id"
+        @visible-change="timerBarVisible = $event"
+    />
 </template>
