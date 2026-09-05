@@ -1,5 +1,7 @@
 # myapp
 
+[![CI](https://github.com/reoreoreo0615-dotcom/myapp/actions/workflows/ci.yml/badge.svg)](https://github.com/reoreoreo0615-dotcom/myapp/actions/workflows/ci.yml)
+
 個人開発用の Laravel アプリケーション。Docker で開発環境を構築しています。
 
 ## 技術スタック
