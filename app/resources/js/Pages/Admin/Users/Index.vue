@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AdminNav from '@/Components/AdminNav.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -68,6 +69,8 @@ const formatDate = (value) => {
         <template #header>
             <h2 class="text-lg font-medium text-ink">ユーザー管理</h2>
         </template>
+
+        <AdminNav />
 
         <div
             v-if="page.props.flash?.error"

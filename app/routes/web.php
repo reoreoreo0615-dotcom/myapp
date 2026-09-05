@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminExerciseController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
@@ -61,6 +62,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::patch('/users/{user}/admin', [AdminUserController::class, 'updateAdmin'])->name('users.update-admin');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/exercises', [AdminExerciseController::class, 'index'])->name('exercises.index');
+    Route::post('/exercises', [AdminExerciseController::class, 'store'])->name('exercises.store');
+    // /reorder は {exercise} の暗黙バインディングと衝突するため、先に定義する。
+    Route::patch('/exercises/reorder', [AdminExerciseController::class, 'reorder'])->name('exercises.reorder');
+    Route::patch('/exercises/{exercise}', [AdminExerciseController::class, 'update'])->name('exercises.update');
+    Route::delete('/exercises/{exercise}', [AdminExerciseController::class, 'destroy'])->name('exercises.destroy');
 });
 
 require __DIR__.'/auth.php';
