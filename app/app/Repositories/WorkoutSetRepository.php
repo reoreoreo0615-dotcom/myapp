@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\WorkoutSet;
+use App\Services\DashboardSummaryService;
+use App\Services\ExerciseHistoryService;
 use App\Services\ProgressionService;
 use Illuminate\Support\Facades\DB;
 
@@ -288,6 +290,183 @@ class WorkoutSetRepository
             'max_weight' => $row?->max_weight !== null ? (float) $row->max_weight : null,
             'max_reps' => $row?->max_reps !== null ? (int) $row->max_reps : null,
             'max_estimated_1rm' => $row?->max_estimated_1rm !== null ? (float) $row->max_estimated_1rm : null,
+        ];
+    }
+
+    // ------------------------------------------------------------------
+    // ダッシュボード(Issue #4)
+    // ------------------------------------------------------------------
+
+    /**
+     * ユーザーが workout_sets を1件でも記録しているか(ウォームアップ除く)。
+     *
+     * ダッシュボードの「記録0件」判定に使う。ワークアウトを作成しただけで
+     * セットが無い場合は「記録がある」に含めない。
+     */
+    public function hasAnyRecordedSets(int $userId): bool
+    {
+        return DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->exists();
+    }
+
+    /**
+     * 今週・先週の総ボリューム(SUM(weight * reps))を1クエリで集計する。
+     *
+     * ウォームアップは除外する。週の境界(月曜始まりかどうか)は
+     * 呼び出し元({@see DashboardSummaryService})が算出した
+     * $thisWeekStart / $lastWeekStart をそのまま条件として使うだけで、
+     * このメソッド自体は週の定義を知らない。
+     *
+     * @return array{this_week: float, last_week: float}
+     */
+    public function weeklyVolume(int $userId, string $thisWeekStart, string $lastWeekStart): array
+    {
+        $row = DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->where('workouts.performed_on', '>=', $lastWeekStart)
+            ->selectRaw(
+                'SUM(CASE WHEN workouts.performed_on >= ? THEN workout_sets.weight * workout_sets.reps ELSE 0 END) as this_week',
+                [$thisWeekStart],
+            )
+            ->selectRaw(
+                'SUM(CASE WHEN workouts.performed_on < ? THEN workout_sets.weight * workout_sets.reps ELSE 0 END) as last_week',
+                [$thisWeekStart],
+            )
+            ->first();
+
+        return [
+            'this_week' => $row?->this_week !== null ? (float) $row->this_week : 0.0,
+            'last_week' => $row?->last_week !== null ? (float) $row->last_week : 0.0,
+        ];
+    }
+
+    /**
+     * ユーザーが記録した週(月曜始まり)の開始日一覧を降順で返す。
+     *
+     * 「記録がある週」の定義は、その週にウォームアップを除く workout_sets が
+     * 1件以上存在すること。
+     *
+     * `DATE_SUB(performed_on, INTERVAL WEEKDAY(performed_on) DAY)` は
+     * その日を含む週の月曜日を返す(MySQL の WEEKDAY() は月曜=0、日曜=6)。
+     *
+     * @return array<int, string> 'Y-m-d' 形式、降順
+     */
+    public function trainedWeekStarts(int $userId): array
+    {
+        return DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->distinct()
+            ->orderByDesc('week_start')
+            ->selectRaw('DATE_SUB(workouts.performed_on, INTERVAL WEEKDAY(workouts.performed_on) DAY) as week_start')
+            ->pluck('week_start')
+            ->map(fn ($date): string => (string) $date)
+            ->all();
+    }
+
+    /**
+     * 「今月の記録更新」判定用に、種目ごとの「今月より前の自己ベスト」と
+     * 「今月の自己ベスト」を1クエリで集計する。
+     *
+     * 指標は種目種別で切り替える(Issue #17 の決定と同じ規約。
+     * {@see ExerciseHistoryService}):
+     *   - 通常種目 → 推定1RM(Epley式。式は {@see personalBest()} と同じものを複製)
+     *   - 自重種目 → レップ数
+     *
+     * 返る行数はユーザーが記録したことのある種目数分(通常は数十件以下)に
+     * 収まる。この小さな結果セットを PHP 側でループして「更新」判定するだけで、
+     * workout_sets の全件を PHP に持ってくるわけではない。
+     *
+     * @return array<int, array{exercise_id: int, is_bodyweight: bool, best_before: float|null, best_this_month: float|null}>
+     */
+    public function monthlyBestComparison(int $userId, string $monthStart): array
+    {
+        $metricExpr = 'CASE '
+            .'WHEN exercises.is_bodyweight THEN workout_sets.reps '
+            .'WHEN workout_sets.weight = 0 THEN 0 '
+            .'WHEN workout_sets.reps <= 1 THEN ROUND(workout_sets.weight, 1) '
+            .'ELSE ROUND(workout_sets.weight * (1 + workout_sets.reps / 30), 1) '
+            .'END';
+
+        return DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->groupBy('workout_sets.exercise_id', 'exercises.is_bodyweight')
+            ->selectRaw('workout_sets.exercise_id')
+            ->selectRaw('exercises.is_bodyweight')
+            ->selectRaw("MAX(CASE WHEN workouts.performed_on < ? THEN ({$metricExpr}) ELSE NULL END) as best_before", [$monthStart])
+            ->selectRaw("MAX(CASE WHEN workouts.performed_on >= ? THEN ({$metricExpr}) ELSE NULL END) as best_this_month", [$monthStart])
+            ->get()
+            ->map(fn ($row): array => [
+                'exercise_id' => (int) $row->exercise_id,
+                'is_bodyweight' => (bool) $row->is_bodyweight,
+                'best_before' => $row->best_before !== null ? (float) $row->best_before : null,
+                'best_this_month' => $row->best_this_month !== null ? (float) $row->best_this_month : null,
+            ])
+            ->all();
+    }
+
+    /**
+     * 全種目を通じて、現在の自己ベスト(種目ごとの最大値)のうち
+     * 最も新しく達成されたものを1件返す(ダッシュボードの「直近の自己ベスト」)。
+     *
+     * 指標は種目種別で切り替える({@see monthlyBestComparison()} と同じ規約:
+     * 通常種目は重量、自重種目はレップ数)。種目ごとに「現在の自己ベストの
+     * セット」を window 関数で1件選び(同値なら最新日を優先)、その中から
+     * 日付が最も新しいものを選ぶ。全セットを PHP に持ってくることはしない。
+     *
+     * @return array{exercise_id: int, exercise_name: string, is_bodyweight: bool, weight: float, reps: int, performed_on: string}|null
+     */
+    public function latestPersonalBest(int $userId): ?array
+    {
+        $metricExpr = 'CASE WHEN exercises.is_bodyweight THEN workout_sets.reps ELSE workout_sets.weight END';
+
+        $perExerciseBest = DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->select([
+                'workout_sets.exercise_id',
+                'exercises.name as exercise_name',
+                'exercises.is_bodyweight',
+                'workouts.performed_on',
+                'workouts.id as workout_pk',
+                'workout_sets.id as set_pk',
+                'workout_sets.weight',
+                'workout_sets.reps',
+            ])
+            ->selectRaw(
+                "ROW_NUMBER() OVER (PARTITION BY workout_sets.exercise_id ORDER BY ({$metricExpr}) DESC, workouts.performed_on DESC, workouts.id DESC, workout_sets.id DESC) as rn"
+            );
+
+        $row = DB::query()
+            ->fromSub($perExerciseBest, 'per_exercise_best')
+            ->where('rn', 1)
+            ->orderByDesc('performed_on')
+            ->orderByDesc('workout_pk')
+            ->orderByDesc('set_pk')
+            ->first();
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'exercise_id' => (int) $row->exercise_id,
+            'exercise_name' => (string) $row->exercise_name,
+            'is_bodyweight' => (bool) $row->is_bodyweight,
+            'weight' => (float) $row->weight,
+            'reps' => (int) $row->reps,
+            'performed_on' => (string) $row->performed_on,
         ];
     }
 }
