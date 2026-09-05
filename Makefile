@@ -1,4 +1,4 @@
-.PHONY: up down restart build php db logs ps artisan composer npm fresh migrate seed tinker clear
+.PHONY: up down restart build php db logs ps artisan composer npm fresh migrate seed tinker clear lint lint-test
 
 # コンテナ起動 / 停止
 up:
@@ -53,3 +53,11 @@ tinker:
 # キャッシュ全消し
 clear:
 	docker compose exec php php artisan optimize:clear
+
+# コード整形(Laravel Pint)
+lint:
+	docker compose exec php ./vendor/bin/pint
+
+# 整形が必要かチェックのみ(修正はしない。CIで使う)
+lint-test:
+	docker compose exec php ./vendor/bin/pint --test

@@ -148,8 +148,26 @@ docker compose exec php ./vendor/bin/pint    # 整形
 ## 7. コードスタイル
 
 - PHP は Laravel Pint(Issue #6 で設定確定)。**コミット前に必ず実行する。**
+- 設定ファイルは `app/pint.json`。プリセットは `laravel` をベースに、以下を明示的に固定している
+  (いずれも `laravel` プリセットの既定動作と同じだが、将来のプリセット変更に影響されないよう
+  明示的に pin している):
+  - `ordered_imports`(`use` 文をアルファベット順に並べる)
+  - `no_unused_imports`(未使用の `use` を削除)
+  - `trailing_comma_in_multiline`(複数行の配列・引数リストの末尾にカンマ)
+  - `exclude`: `vendor` / `storage` / `bootstrap/cache`
+  - `declare_strict_types` は**採用していない**。全84ファイルに影響する変更になり、
+    既存コードの型強制の挙動を個別に検証するコストに対してメリットが小さいと判断した。
+    導入する場合は別Issueで、全ファイル適用後に全テストが通ることを確認してから行う。
+  - 実行コマンド:
+    ```bash
+    make lint       # 整形を実行(app/pint.json を使用)
+    make lint-test  # 整形が必要かチェックのみ(修正はしない。CI向け)
+    ```
+    内部的には `docker compose exec php ./vendor/bin/pint`
+    /  `... pint --test` を呼んでいる。
 - ビジネスロジックはコントローラに書かず、`app/Services/` に切り出す。
   特に `ProgressionService` は Eloquent に依存しない純粋なロジックとして書き、
   ユニットテストを厚くかけるようにする。
 - Vue コンポーネントは `resources/js/Pages/`(Inertia ページ)と
   `resources/js/Components/`(再利用部品)に分ける。
+  **Vue/JS の整形(Prettier / ESLint)は別Issueで扱う。ここでは対象外。**
