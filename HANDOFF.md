@@ -163,14 +163,84 @@ make logs      # ログ
 
 ## 6. 次にやること(TODO)
 
-### 直近の着手対象
-1. **Issue #3(DB設計・マイグレーション)** — 全ての前提。ここが固まるまで他に着手しない。
-2. Issue #2(認証 + Inertia/Vue3 基盤)— #3 と並行可。
-3. Issue #6 → #5(Pint → CI)。
+> 最終更新: 2026-09-05(セッション1終了時点)
+
+### 完了済み
+
+| # | 内容 | 状態 |
+|---|---|---|
+| #1 | 開発環境の構築 | ✅ |
+| #12 | サブエージェント構成(`.claude/agents/` 3体) | ✅ |
+| #3 | DB設計・マイグレーション(6テーブル) | ✅ |
+| #7 | 種目マスタのシーダー(31種目) | ✅ |
+| #8 | ProgressionService + テスト35件 | ✅ |
+| #2 | 認証 + Inertia/Vue3 基盤(Breeze vue) | ✅ |
+
+**現在 http://localhost/ でログイン画面が表示され、認証が動作する。**
+ログイン: `admin@example.com` / `(パスワードは各自で設定)`(id=7)
+
+テストは58件全パス(MySQL の `myapp_testing` で実行)。
+
+### 進行中(次セッションで最初に確認すること)
+
+**Issue #13「管理者権限の基盤 + ユーザー管理」を Sonnet エージェントに委譲済み。**
+セッション終了時点で実行中だった可能性がある。
+
+次セッションの最初にやること:
+1. `git status` で未コミットの変更を確認する
+2. 変更があれば Issue #13 の実装結果として**レビューする**
+   (エージェントの報告は残っていないので、コード自体を読んで検証すること)
+3. 問題なければコミット → Issue #13 に作業記録を投稿 → クローズ
+
+### Issue #13 のレビュー時に必ず確認すること
+
+**このIssueの本丸はデータ漏洩バグの修正。**
+
+```sql
+-- 外部キーが CASCADE になったか
+SELECT k.TABLE_NAME, k.COLUMN_NAME, r.DELETE_RULE
+FROM information_schema.KEY_COLUMN_USAGE k
+JOIN information_schema.REFERENTIAL_CONSTRAINTS r
+  ON r.CONSTRAINT_NAME = k.CONSTRAINT_NAME AND r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA
+WHERE k.CONSTRAINT_SCHEMA = 'myapp' AND k.TABLE_NAME = 'exercises';
+-- 期待: exercises.user_id → CASCADE(修正前は SET NULL)
+```
+
+- [ ] `exercises.user_id` が CASCADE になっている
+- [ ] ユーザー削除後、そのユーザーの独自種目が `user_id = NULL` で残らないテストがある
+- [ ] 既定種目31件は消えないことも同時に検証されている
+- [ ] `ProfileController@destroy`(自己削除)も `DeleteUserService` を使っている
+- [ ] `migrate:rollback` が通る(FK貼り直しは rollback で失敗しやすい)
+- [ ] 既存58テストが壊れていない
+
+### 残りの Issue(着手順)
+
+| # | 内容 | 段階 |
+|---|---|---|
+| #13 | 管理者権限 + ユーザー管理 + **削除バグ修正** | 進行中 |
+| #14 | 種目マスタの管理画面 | #13 の後 |
+| #6 | Laravel Pint 導入 | 基盤(早めに) |
+| #5 | CI(GitHub Actions) | 基盤(早めに) |
+| #9 | ルーティン(メニュー)管理 | 機能 |
+| #10 | ワークアウト記録画面(最重要) | 機能 |
+| #11 | 種目別履歴・1RM推移グラフ | 機能 |
+| #4 | ダッシュボード・共通レイアウト | 機能 |
+
+**#6 Pint と #5 CI は機能実装より前に入れること。**
+後から一括整形すると差分が巨大になりレビュー不能になる。
+
+### 既知の残課題
+
+- **`lastWorkingSetsFor` は種目1件ごとに2クエリ。** #10 の記録画面でそのまま使うと
+  N+1(10〜16クエリ)になる。`lastWorkingSetsForMany()` の新設が #10 の必須要件(Issue に追記済み)。
+- **`exercises.name` に UNIQUE 制約が無い。** `unique(user_id, name)` を張っても
+  MySQL は NULL を互いに異なる値として扱うため既定種目の重複は防げない。#9 で再検討。
+- **`verified` ミドルウェア**が dashboard に付いているが `User` が `MustVerifyEmail` 未実装のため実質無効。
+- **`laravel/sanctum`** が Breeze の依存で入ったが未使用。
 
 ### 開発体制(Opus 主導 + Sonnet 委譲)
 
-ユーザーの希望する体制。**境界は「判断が要るか」で引く。**
+**境界は「判断が要るか」で引く。**
 
 | Opus が持つ | Sonnet サブエージェントに渡す |
 | --- | --- |
@@ -179,22 +249,22 @@ make logs      # ログ
 | レビューと統合 | テストコードの記述 |
 | Issue への MD 記録とクローズ | |
 
-定義予定のエージェント(`.claude/agents/`、すべて model: sonnet):
+定義は `.claude/agents/` に3体(`laravel-backend` / `vue-frontend` / `test-writer`、すべて model: sonnet)。
 
-| エージェント | 担当 |
-| --- | --- |
-| `laravel-backend` | マイグレーション / モデル / リレーション / コントローラ / FormRequest / Policy |
-| `vue-frontend` | Inertia ページ / Vue コンポーネント / Tailwind スタイル |
-| `test-writer` | Feature テスト / ProgressionService のユニットテスト |
-
-→ **Issue #12** で整備する。`.claude/` ディレクトリはまだ存在しない。
+> **注意:** `.claude/agents/` はセッション開始時に読み込まれる。
+> 定義直後の同一セッションでは `subagent_type` に指定できない。
+> その場合は general-purpose + model:sonnet で起動し、
+> プロンプト冒頭で定義ファイルを読ませることで代替できる(セッション1ではこの方法を使った)。
 
 ### 運用ルール(ユーザー指示)
 
-- **GitHub Issue の追加・更新・クローズは Claude に一任されている。**
-- **対応が完了したら、対象 Issue のコメントに Markdown 形式で作業記録を残してからクローズする。**
-  記録に含める内容: 実装内容の要約 / 作成・変更したファイル / 設計上の判断とその理由 / 残課題。
-  `gh issue comment <番号> --body-file <MDファイル>`
+- GitHub Issue の追加・更新・クローズは Claude に一任されている。
+- **新規 Issue には必ず `reoreoreo0615-dotcom` をアサインし、プロジェクト「個人開発」に追加する。**
+- **対応完了時は、対象 Issue のコメントに日付付きの Markdown で作業記録を投稿してからクローズする。**
+  同じ内容を `.claude/worklog/issue-<番号>_<YYYY-MM-DD>.md` にも保存する。
+- コミット・push は確認不要(リポジトリは Private)。
+- **サブエージェント稼働中は `git add -A` を使わない。** 書きかけのファイルを巻き込む。
+  セッション1で実際に事故が起きた(コミット 60d68a8)。パスを明示指定すること。
 
 ---
 
