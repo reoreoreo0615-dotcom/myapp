@@ -12,11 +12,10 @@
  */
 
 @theme {
-    /* タイポグラフィ: Google Fonts 3種 */
-    --font-sans: 'Zen Kaku Gothic New', 'Archivo', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-display: 'Archivo', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    /* 書体は Noto Sans JP に統一。階層はウェイト(300〜800)と字間で作る。 */
+    --font-sans: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
 
     /* 色トークン: ダーク(既定値)。ライトは下の @media で上書きする */
     --color-ground: #14171a;
@@ -66,10 +65,12 @@
 }
 
 @layer utilities {
-    /* 微細ラベル: JetBrains Mono / 大文字 / letter-spacing 0.1em */
+    /* 微細ラベル(TARGET / PREV など)。
+       書体を統一したため、本文との差は字間・ウェイト・大文字で作る。 */
     .label-micro {
-        font-family: var(--font-mono);
+        font-family: var(--font-sans);
+        font-weight: 500;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.12em;
     }
 }
