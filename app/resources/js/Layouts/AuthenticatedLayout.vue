@@ -6,8 +6,6 @@ const page = usePage();
 const isAdmin = computed(() => page.props.auth.user.is_admin);
 const userName = computed(() => page.props.auth.user.name);
 
-// 履歴の画面は別Issue(#11)でこれから作る。ルートがまだ存在しないため、
-// ここでは非活性のプレースホルダーとして置く。
 const navItems = computed(() => {
     const items = [
         {
@@ -27,8 +25,8 @@ const navItems = computed(() => {
         {
             key: 'history',
             label: '履歴',
-            href: null,
-            active: false,
+            href: route('history.index'),
+            active: route().current('history.*'),
             icon: 'history',
         },
         {

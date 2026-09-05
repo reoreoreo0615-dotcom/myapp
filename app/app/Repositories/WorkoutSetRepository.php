@@ -158,4 +158,136 @@ class WorkoutSetRepository
 
         return $result;
     }
+
+    // ------------------------------------------------------------------
+    // 種目別履歴(Issue #11 / #17)
+    // ------------------------------------------------------------------
+
+    /**
+     * 種目別履歴の推移グラフ用データ。ワークアウトごとの「トップセット」
+     * (最大重量、同重量なら最大レップ。{@see ProgressionService::pickTopSet()}
+     * と同じ定義)を、SQL の window 関数で1件ずつ選び出す。全セットを
+     * PHP に持ってきてから絞り込むことはしない。
+     *
+     * is_warmup = false のセットのみを対象にする(グラフの注意点)。
+     *
+     * @param  string|null  $sinceDate  'Y-m-d'。null なら期間の下限なし(全期間)。
+     * @return array<int, array{workout_id: int, performed_on: string, weight: float, reps: int}> performed_on 昇順
+     */
+    public function historyTopSetsPerWorkout(int $userId, int $exerciseId, ?string $sinceDate): array
+    {
+        $ranked = DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workout_sets.exercise_id', $exerciseId)
+            ->where('workout_sets.is_warmup', false)
+            ->where('workouts.user_id', $userId)
+            ->when(
+                $sinceDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '>=', $sinceDate),
+            )
+            ->select([
+                'workouts.id as workout_id',
+                'workouts.performed_on',
+                'workout_sets.weight',
+                'workout_sets.reps',
+            ])
+            ->selectRaw(
+                'ROW_NUMBER() OVER (PARTITION BY workouts.id ORDER BY workout_sets.weight DESC, workout_sets.reps DESC) AS rn'
+            );
+
+        return DB::query()
+            ->fromSub($ranked, 'ranked')
+            ->where('rn', 1)
+            ->orderBy('performed_on')
+            ->orderBy('workout_id')
+            ->get(['workout_id', 'performed_on', 'weight', 'reps'])
+            ->map(fn ($row): array => [
+                'workout_id' => (int) $row->workout_id,
+                'performed_on' => (string) $row->performed_on,
+                'weight' => (float) $row->weight,
+                'reps' => (int) $row->reps,
+            ])
+            ->all();
+    }
+
+    /**
+     * 種目別履歴の全セット一覧(ウォームアップ含む、日付降順)。
+     *
+     * 一覧表示は「その日その種目で何をやったか」を漏れなく見せる目的のため、
+     * 集計(グラフ・自己ベスト)とは異なりウォームアップも含める。
+     *
+     * @param  string|null  $sinceDate  'Y-m-d'。null なら期間の下限なし。
+     * @return array<int, array{id: int, date: string, weight: float, reps: int, rpe: float|null, is_warmup: bool}>
+     */
+    public function historyAllSets(int $userId, int $exerciseId, ?string $sinceDate): array
+    {
+        return DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workout_sets.exercise_id', $exerciseId)
+            ->where('workouts.user_id', $userId)
+            ->when(
+                $sinceDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '>=', $sinceDate),
+            )
+            ->orderByDesc('workouts.performed_on')
+            ->orderByDesc('workouts.id')
+            ->orderByDesc('workout_sets.set_number')
+            ->get([
+                'workout_sets.id',
+                'workouts.performed_on',
+                'workout_sets.weight',
+                'workout_sets.reps',
+                'workout_sets.rpe',
+                'workout_sets.is_warmup',
+            ])
+            ->map(fn ($row): array => [
+                'id' => (int) $row->id,
+                'date' => (string) $row->performed_on,
+                'weight' => (float) $row->weight,
+                'reps' => (int) $row->reps,
+                'rpe' => $row->rpe !== null ? (float) $row->rpe : null,
+                'is_warmup' => (bool) $row->is_warmup,
+            ])
+            ->all();
+    }
+
+    /**
+     * 種目の自己ベスト(最大重量・最大推定1RM・最大レップ数)を SQL 側の
+     * MAX() 集計で求める。全セットを PHP に取得してから比較することはしない。
+     *
+     * 期間フィルタの対象外(常に全期間)。ウォームアップは除外する。
+     *
+     * 推定1RM の式は {@see ProgressionService::estimateOneRepMax()}
+     * と同じもの(Epley 式、weight=0 は 0、reps=1 は weight そのまま)を
+     * SQL 式として複製している。MAX() 集計のために SQL 側で計算する必要があり、
+     * かつ ProgressionService 自体は変更しない方針(Issue #17)のための複製。
+     * 式を変更する場合は両方を合わせて直すこと
+     * (tests/Feature/History/ExerciseHistoryTest.php に整合性の確認テストがある)。
+     *
+     * @return array{max_weight: float|null, max_reps: int|null, max_estimated_1rm: float|null}
+     */
+    public function personalBest(int $userId, int $exerciseId): array
+    {
+        $row = DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->where('workout_sets.exercise_id', $exerciseId)
+            ->where('workout_sets.is_warmup', false)
+            ->where('workouts.user_id', $userId)
+            ->selectRaw('MAX(workout_sets.weight) as max_weight')
+            ->selectRaw('MAX(workout_sets.reps) as max_reps')
+            ->selectRaw(
+                'MAX(CASE '
+                .'WHEN workout_sets.weight = 0 THEN 0 '
+                .'WHEN workout_sets.reps <= 1 THEN ROUND(workout_sets.weight, 1) '
+                .'ELSE ROUND(workout_sets.weight * (1 + workout_sets.reps / 30), 1) '
+                .'END) as max_estimated_1rm'
+            )
+            ->first();
+
+        return [
+            'max_weight' => $row?->max_weight !== null ? (float) $row->max_weight : null,
+            'max_reps' => $row?->max_reps !== null ? (int) $row->max_reps : null,
+            'max_estimated_1rm' => $row?->max_estimated_1rm !== null ? (float) $row->max_estimated_1rm : null,
+        ];
+    }
 }

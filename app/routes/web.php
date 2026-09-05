@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\RoutineExerciseController;
@@ -43,6 +44,8 @@ Route::middleware('auth')->group(function () {
         ->name('routines.exercises.destroy');
 
     Route::post('/exercises', [ExerciseController::class, 'store'])->name('exercises.store');
+
+    Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
 
     Route::get('/workouts/create', [WorkoutController::class, 'create'])->name('workouts.create');
     Route::post('/workouts', [WorkoutController::class, 'store'])->name('workouts.store');
