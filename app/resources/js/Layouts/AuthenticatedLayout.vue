@@ -6,9 +6,8 @@ const page = usePage();
 const isAdmin = computed(() => page.props.auth.user.is_admin);
 const userName = computed(() => page.props.auth.user.name);
 
-// 記録(ワークアウト記録)と履歴の画面は別Issue(#14 / #9・#10・#11)でこれから作る。
+// 記録(ワークアウト記録)と履歴の画面は別Issue(#14 / #10・#11)でこれから作る。
 // ルートがまだ存在しないため、ここでは非活性のプレースホルダーとして置く。
-// メニューは専用画面が未定なので、暫定的にプロフィール編集画面にリンクしている。
 const navItems = computed(() => {
     const items = [
         {
@@ -35,8 +34,8 @@ const navItems = computed(() => {
         {
             key: 'menu',
             label: 'メニュー',
-            href: route('profile.edit'),
-            active: route().current('profile.*'),
+            href: route('routines.index'),
+            active: route().current('routines.*'),
             icon: 'menu',
         },
     ];

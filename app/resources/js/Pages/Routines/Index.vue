@@ -1,0 +1,128 @@
+<script setup>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import DangerButton from '@/Components/DangerButton.vue';
+import Modal from '@/Components/Modal.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import Rule from '@/Components/Rule.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+defineProps({
+    routines: {
+        type: Array,
+        required: true,
+    },
+});
+
+const page = usePage();
+
+const confirmingDeleteRoutine = ref(null);
+const isDeleting = ref(false);
+
+const confirmDelete = (routine) => {
+    confirmingDeleteRoutine.value = routine;
+};
+
+const closeDeleteModal = () => {
+    confirmingDeleteRoutine.value = null;
+};
+
+const deleteRoutine = () => {
+    if (!confirmingDeleteRoutine.value) {
+        return;
+    }
+
+    isDeleting.value = true;
+
+    router.delete(route('routines.destroy', confirmingDeleteRoutine.value.id), {
+        preserveScroll: true,
+        onFinish: () => {
+            isDeleting.value = false;
+            closeDeleteModal();
+        },
+    });
+};
+</script>
+
+<template>
+    <Head title="メニュー" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <h2 class="text-lg font-medium text-ink">メニュー</h2>
+        </template>
+
+        <div
+            v-if="page.props.flash?.success"
+            class="mb-4 border border-ok px-4 py-3 text-sm text-ok"
+        >
+            {{ page.props.flash.success }}
+        </div>
+
+        <Link
+            :href="route('routines.create')"
+            class="inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
+        >
+            + 新しいメニューを作成
+        </Link>
+
+        <Rule class="mt-6" />
+
+        <div v-if="routines.length === 0" class="py-8 text-center text-sm text-ink-2">
+            メニューがまだありません。「胸の日」「Pull の日」のように、
+            トレーニングの組み合わせを作成しましょう。
+        </div>
+
+        <div v-else class="divide-y divide-line">
+            <div v-for="routine in routines" :key="routine.id" class="py-4 first:pt-4">
+                <div class="flex items-start justify-between gap-3">
+                    <Link
+                        :href="route('routines.edit', routine.id)"
+                        class="min-w-0 flex-1"
+                    >
+                        <p class="truncate font-medium text-ink">{{ routine.name }}</p>
+                        <p v-if="routine.description" class="mt-1 truncate text-sm text-ink-2">
+                            {{ routine.description }}
+                        </p>
+                        <p class="label-micro mt-2 text-[10px] text-ink-3">
+                            {{ routine.exercises_count }}種目
+                        </p>
+                    </Link>
+                </div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <Link
+                        :href="route('routines.edit', routine.id)"
+                        class="inline-flex h-12 items-center justify-center gap-2 border border-line px-6 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
+                    >
+                        編集
+                    </Link>
+                    <DangerButton @click="confirmDelete(routine)">削除</DangerButton>
+                </div>
+            </div>
+        </div>
+
+        <Modal :show="confirmingDeleteRoutine !== null" @close="closeDeleteModal">
+            <div class="p-6">
+                <h2 class="text-base font-medium text-ink">
+                    本当にこのメニューを削除しますか?
+                </h2>
+
+                <p class="mt-2 text-sm text-ink-2">
+                    <span class="font-medium text-ink">{{ confirmingDeleteRoutine?.name }}</span>
+                    を削除します。この操作は取り消せません
+                    (過去にこのメニューで記録したワークアウトの履歴自体は残ります)。
+                </p>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeDeleteModal">
+                        キャンセル
+                    </SecondaryButton>
+                    <DangerButton :disabled="isDeleting" @click="deleteRoutine">
+                        削除する
+                    </DangerButton>
+                </div>
+            </div>
+        </Modal>
+    </AuthenticatedLayout>
+</template>
