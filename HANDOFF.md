@@ -201,44 +201,45 @@ http://localhost/ でログイン: `admin@example.com` / `(パスワードは各
 
 ### 次にやること
 
-1. **#10 ワークアウト記録画面 — 実装が中断した状態で残っている**
+1. **#10 ワークアウト記録画面 — 実装完了。ただし未レビュー(最優先で確認すること)**
 
-   セッション2終了時点でエージェントが実装中だった。**完成しているかは不明。**
-   以下のファイルが未コミットで作業ツリーに残っている:
+   ユーザー不在中にエージェントの実装が完了したため、**レビューを経ずに
+   コミット `582c138` として push してある。** Issue #10 は意図的にクローズしていない。
 
-   ```
-   M  app/app/Models/Workout.php
-   M  app/app/Models/WorkoutSet.php
-   M  app/app/Repositories/WorkoutSetRepository.php
-   M  app/resources/js/Layouts/AuthenticatedLayout.vue
-   M  app/routes/web.php
-   ?? app/app/Http/Controllers/WorkoutController.php
-   ?? app/app/Http/Controllers/WorkoutSetController.php
-   ?? app/app/Http/Requests/{StoreWorkout,StoreWorkoutSet,UpdateWorkoutSet}Request.php
-   ?? app/app/Policies/WorkoutPolicy.php
-   ?? app/app/Services/WorkoutProgressionSnapshotService.php
-   ?? app/database/migrations/2026_09_05_160000_add_progression_snapshot_to_workouts_table.php
-   ?? app/database/migrations/2026_09_05_160100_add_client_request_id_to_workout_sets_table.php
-   ```
+   テスト129件パス / Pint PASS / `npm run build` 成功 / ナビ「記録」接続済み。
+   `resources/js/Pages/Workouts/{Create,Show}.vue` も存在する。
 
-   **注意: Vue のページコンポーネント(`resources/js/Pages/Workouts/` など)が
-   まだ存在しない。** 画面側が未完の可能性が高い。
+   ### エージェントが指示外で追加した設計判断 — 採用可否を判断すること
 
-   マイグレーションが2件追加されている点にも注意:
-   - `progression_snapshot` … 提示した目標を記録側に保存する設計と思われる
-   - `client_request_id` … 二重送信防止のための冪等キーと思われる
+   **① `workouts.progression_snapshot`(json, nullable)**
 
-   いずれも指示に無かった設計判断なので、**採用するか差し戻すかを判断すること。**
+   エージェントが**実バグを発見して対処したもの**。記録を始めると、
+   そのセッション自身のセットが「直近のワークアウト」になってしまい、
+   セッション途中で「前回」と「今日の目標」が変わってしまう。
+   種目ごとに初回参照時にスナップショットを凍結して解決している。
 
-   ### 再開手順
-   1. `docker compose up -d` で環境を起動
-   2. `git status` で上記が残っていることを確認
-   3. `docker compose exec php php artisan test` を実行し、現状の通過数を把握
-      (中断前のベースラインは106件)
-   4. `docker compose exec php npm run build` が通るか確認
-   5. 未完なら、残りを実装させるか、`git checkout .` + 未追跡ファイル削除で
-      やり直すかを判断する
-   6. レビュー観点は下記
+   `test_target_does_not_shift_after_recording_a_set_in_the_same_session` が
+   この修正なしでは落ちる、との報告。**まずこのテストを確認すること。**
+   問題の指摘自体は正しいので、解法が妥当かを見る。
+
+   **② `workout_sets.client_request_id`(nullable, unique)**
+
+   二重送信防止の冪等キー。クライアントがUUIDを生成し、サーバーが既存行を確認。
+   DB側のunique制約を最終防衛線にしている。
+
+   ### その他レビューすべき点
+   - `SetRow.vue` が編集・削除・ウォームアップ表示に拡張されている
+   - 「メニューなしの飛び込み」フローが実装されている(指示外)
+   - 履歴が無い種目は weight 0 / `target_rep_min` にフォールバック
+   - **`finished_at` を確定する「トレーニング終了」フローは未実装**(受入条件外として保留)
+   - セット削除の確認が Modal ではなく素の `confirm()`
+
+   ### 実機確認(未実施)
+   実データが入っているので、http://localhost/ の「記録」から
+   **胸の日 → ベンチプレスで「62.5kg × 6回」が表示されるか**を必ず目視すること。
+   ウォームアップ(20kg等)が「前回」として表示されていたら `is_warmup` の除外漏れ。
+
+   レビュー観点は下記
 2. #17 自重種目の1RM問題 → **#11 の前に方針を決める**
 3. #11 種目別履歴・1RMグラフ
 4. #4 ダッシュボード
