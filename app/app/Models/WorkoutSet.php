@@ -24,6 +24,7 @@ class WorkoutSet extends Model
         'rpe',
         'is_warmup',
         'memo',
+        'client_request_id',
     ];
 
     /**

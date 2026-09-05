@@ -283,4 +283,169 @@ class WorkoutSetRepositoryTest extends TestCase
 
         $this->assertLessThanOrEqual(2, $queryCount, 'lastWorkingSetsFor() should issue at most 2 queries (N+1 対策).');
     }
+
+    // ------------------------------------------------------------------
+    // lastWorkingSetsForMany()
+    // ------------------------------------------------------------------
+
+    public function test_many_returns_empty_array_for_empty_exercise_list(): void
+    {
+        $user = User::factory()->create();
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, []);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_many_returns_last_working_sets_per_exercise(): void
+    {
+        $user = User::factory()->create();
+        $bench = Exercise::factory()->create(['user_id' => $user->id]);
+        $squat = Exercise::factory()->create(['user_id' => $user->id]);
+
+        // ベンチプレス: 9/1 (古い) と 9/3 (新しい)
+        $benchOld = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $benchOld->id, 'exercise_id' => $bench->id,
+            'weight' => 55.0, 'reps' => 10, 'is_warmup' => false,
+        ]);
+        $benchNew = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-03']);
+        $benchNewSet = WorkoutSet::factory()->create([
+            'workout_id' => $benchNew->id, 'exercise_id' => $bench->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+
+        // スクワット: 9/2 のみ
+        $squatWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-02']);
+        $squatSet = WorkoutSet::factory()->create([
+            'workout_id' => $squatWorkout->id, 'exercise_id' => $squat->id,
+            'weight' => 80.0, 'reps' => 5, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$bench->id, $squat->id]);
+
+        $this->assertSame([
+            'weight' => (float) $benchNewSet->weight,
+            'reps' => $benchNewSet->reps,
+            'is_warmup' => false,
+        ], $result[$bench->id][0]);
+        $this->assertSame([
+            'weight' => (float) $squatSet->weight,
+            'reps' => $squatSet->reps,
+            'is_warmup' => false,
+        ], $result[$squat->id][0]);
+    }
+
+    public function test_many_does_not_mix_up_sets_when_exercises_share_the_same_last_workout(): void
+    {
+        $user = User::factory()->create();
+        $bench = Exercise::factory()->create(['user_id' => $user->id]);
+        $squat = Exercise::factory()->create(['user_id' => $user->id]);
+
+        // 同じワークアウトの中で両種目を実施している場合、取り違えないこと。
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-03']);
+        $benchSet = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $bench->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+        $squatSet = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $squat->id,
+            'weight' => 100.0, 'reps' => 5, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$bench->id, $squat->id]);
+
+        $this->assertCount(1, $result[$bench->id]);
+        $this->assertSame(60.0, $result[$bench->id][0]['weight']);
+        $this->assertCount(1, $result[$squat->id]);
+        $this->assertSame(100.0, $result[$squat->id][0]['weight']);
+    }
+
+    public function test_many_excludes_warmup_sets(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-03']);
+        WorkoutSet::factory()->warmup()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 20.0, 'reps' => 10,
+        ]);
+        $workingSet = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id]);
+
+        $this->assertCount(1, $result[$exercise->id]);
+        $this->assertSame((float) $workingSet->weight, $result[$exercise->id][0]['weight']);
+    }
+
+    public function test_many_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $otherWorkout = Workout::factory()->create(['user_id' => $otherUser->id, 'performed_on' => '2026-09-05']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $otherWorkout->id, 'exercise_id' => $exercise->id,
+            'weight' => 999.0, 'reps' => 1, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id]);
+
+        $this->assertArrayNotHasKey($exercise->id, $result);
+    }
+
+    public function test_many_omits_exercises_with_no_history(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id]);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * 受入条件: 種目数によらずクエリ数が増えないこと。3種目でも8種目でも
+     * 常に2クエリで済むことを実測して確認する(N+1対策)。
+     */
+    public function test_many_issues_exactly_two_queries_regardless_of_exercise_count(): void
+    {
+        $user = User::factory()->create();
+
+        $makeHistory = function () use ($user): Exercise {
+            $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+            $workout = Workout::factory()->create([
+                'user_id' => $user->id,
+                'performed_on' => '2026-09-01',
+            ]);
+            WorkoutSet::factory()->count(3)->create([
+                'workout_id' => $workout->id,
+                'exercise_id' => $exercise->id,
+                'is_warmup' => false,
+            ]);
+
+            return $exercise;
+        };
+
+        $threeExerciseIds = collect(range(1, 3))->map(fn () => $makeHistory()->id)->all();
+        $eightExerciseIds = collect(range(1, 8))->map(fn () => $makeHistory()->id)->all();
+
+        DB::enableQueryLog();
+        $this->repository->lastWorkingSetsForMany($user->id, $threeExerciseIds);
+        $queryCountForThree = count(DB::getQueryLog());
+        DB::flushQueryLog();
+
+        $this->repository->lastWorkingSetsForMany($user->id, $eightExerciseIds);
+        $queryCountForEight = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertSame(2, $queryCountForThree, '3種目でも2クエリのはず。');
+        $this->assertSame(2, $queryCountForEight, '8種目でも2クエリのはず(N+1になっていないこと)。');
+        $this->assertSame($queryCountForThree, $queryCountForEight, '種目数が増えてもクエリ数は変わらないこと。');
+    }
 }

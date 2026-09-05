@@ -23,6 +23,7 @@ class Workout extends Model
         'started_at',
         'finished_at',
         'memo',
+        'progression_snapshot',
     ];
 
     /**
@@ -36,6 +37,9 @@ class Workout extends Model
             'performed_on' => 'date',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            // 種目ごとの「前回のセット」「今日の目標」をワークアウト開始時点で凍結したもの。
+            // {@see \App\Services\WorkoutProgressionSnapshotService}
+            'progression_snapshot' => 'array',
         ];
     }
 

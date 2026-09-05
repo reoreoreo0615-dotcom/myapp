@@ -6,6 +6,8 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\RoutineExerciseController;
+use App\Http\Controllers\WorkoutController;
+use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -41,6 +43,14 @@ Route::middleware('auth')->group(function () {
         ->name('routines.exercises.destroy');
 
     Route::post('/exercises', [ExerciseController::class, 'store'])->name('exercises.store');
+
+    Route::get('/workouts/create', [WorkoutController::class, 'create'])->name('workouts.create');
+    Route::post('/workouts', [WorkoutController::class, 'store'])->name('workouts.store');
+    Route::get('/workouts/{workout}', [WorkoutController::class, 'show'])->name('workouts.show');
+
+    Route::post('/workouts/{workout}/sets', [WorkoutSetController::class, 'store'])->name('workouts.sets.store');
+    Route::patch('/workouts/{workout}/sets/{workoutSet}', [WorkoutSetController::class, 'update'])->name('workouts.sets.update');
+    Route::delete('/workouts/{workout}/sets/{workoutSet}', [WorkoutSetController::class, 'destroy'])->name('workouts.sets.destroy');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
