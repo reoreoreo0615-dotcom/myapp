@@ -61,6 +61,7 @@ class WorkoutSetController extends Controller
                 'set_number' => $setNumber,
                 'weight' => $data['weight'],
                 'reps' => $data['reps'],
+                'rpe' => $data['rpe'] ?? null,
                 'is_warmup' => $data['is_warmup'] ?? false,
                 'client_request_id' => $data['client_request_id'] ?? null,
             ]);

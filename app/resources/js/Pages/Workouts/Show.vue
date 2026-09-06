@@ -49,7 +49,7 @@ const props = defineProps({
         type: Object,
         required: true,
     },
-    // exercise_id をキーにした [{id,set_number,weight,reps,is_warmup}]
+    // exercise_id をキーにした [{id,set_number,weight,reps,rpe,is_warmup}]
     recordedSets: {
         type: Object,
         required: true,
@@ -123,7 +123,7 @@ function targetOrDefault(exerciseId) {
 function ensureDraft(exerciseId) {
     if (!draft[exerciseId]) {
         const base = targetOrDefault(exerciseId);
-        draft[exerciseId] = { weight: base.weight, reps: base.reps, isWarmup: false };
+        draft[exerciseId] = { weight: base.weight, reps: base.reps, isWarmup: false, rpe: null };
     }
     return draft[exerciseId];
 }
@@ -192,6 +192,7 @@ function recordSet(exercise) {
             exercise_id: exercise.id,
             weight: values.weight,
             reps: values.reps,
+            rpe: values.rpe,
             is_warmup: values.isWarmup,
             client_request_id: clientRequestId,
         },
@@ -205,9 +206,14 @@ function recordSet(exercise) {
             onFinish: () => {
                 processing[exercise.id] = false;
                 // 目標値は据え置き(セッション中は同じ目標を提示し続ける)。
-                // ウォームアップの選択だけは1セットごとにリセットする。
+                // ウォームアップ・RPEの入力だけは1セットごとにリセットする。
                 const base = targetOrDefault(exercise.id);
-                draft[exercise.id] = { weight: base.weight, reps: base.reps, isWarmup: false };
+                draft[exercise.id] = {
+                    weight: base.weight,
+                    reps: base.reps,
+                    isWarmup: false,
+                    rpe: null,
+                };
             },
         },
     );
@@ -216,13 +222,14 @@ function recordSet(exercise) {
 /* --- 既存セットの編集・削除 --- */
 
 const editingSetId = ref(null);
-const editDraft = reactive({ weight: 0, reps: 0 });
+const editDraft = reactive({ weight: 0, reps: 0, rpe: null });
 const editProcessing = ref(false);
 
 function startEdit(set) {
     editingSetId.value = set.id;
     editDraft.weight = set.weight;
     editDraft.reps = set.reps;
+    editDraft.rpe = set.rpe ?? null;
 }
 
 function cancelEdit() {
@@ -236,6 +243,7 @@ function saveEdit(set) {
         {
             weight: editDraft.weight,
             reps: editDraft.reps,
+            rpe: editDraft.rpe,
             is_warmup: set.is_warmup,
         },
         {
@@ -533,6 +541,7 @@ function finishWorkout() {
                         :set-number="set.set_number"
                         :weight="editingSetId === set.id ? editDraft.weight : set.weight"
                         :reps="editingSetId === set.id ? editDraft.reps : set.reps"
+                        :rpe="editingSetId === set.id ? editDraft.rpe : set.rpe"
                         :weight-step="exercise.weight_increment"
                         completed
                         :editable="canEditSets"
@@ -541,6 +550,7 @@ function finishWorkout() {
                         :processing="editProcessing && editingSetId === set.id"
                         @update:weight="editDraft.weight = $event"
                         @update:reps="editDraft.reps = $event"
+                        @update:rpe="editDraft.rpe = $event"
                         @edit-start="startEdit(set)"
                         @edit-cancel="cancelEdit"
                         @edit-save="saveEdit(set)"
@@ -552,10 +562,12 @@ function finishWorkout() {
                         :set-number="nextSetNumber(exercise.id)"
                         :weight="draft[exercise.id].weight"
                         :reps="draft[exercise.id].reps"
+                        :rpe="draft[exercise.id].rpe"
                         :weight-step="exercise.weight_increment"
                         :processing="!!processing[exercise.id]"
                         @update:weight="draft[exercise.id].weight = $event"
                         @update:reps="draft[exercise.id].reps = $event"
+                        @update:rpe="draft[exercise.id].rpe = $event"
                         @record="recordSet(exercise)"
                     />
                 </div>

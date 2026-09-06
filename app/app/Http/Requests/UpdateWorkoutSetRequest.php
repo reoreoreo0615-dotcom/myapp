@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\HalfStepIncrement;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateWorkoutSetRequest extends FormRequest
@@ -9,7 +10,7 @@ class UpdateWorkoutSetRequest extends FormRequest
     /**
      * Editing a set on a workout is gated by the same "update" ability
      * that governs the workout itself. The exercise a set belongs to is
-     * not editable (only weight / reps / is_warmup can be corrected).
+     * not editable (only weight / reps / is_warmup / rpe can be corrected).
      */
     public function authorize(): bool
     {
@@ -25,6 +26,9 @@ class UpdateWorkoutSetRequest extends FormRequest
             'weight' => ['required', 'numeric', 'min:0', 'max:999.99'],
             'reps' => ['required', 'integer', 'min:1', 'max:999'],
             'is_warmup' => ['nullable', 'boolean'],
+            // RPE(Issue #26②)は任意入力。既定は未入力(null)。
+            // 入力する場合は 6.0〜10.0 を 0.5 刻みのみ許可する。
+            'rpe' => ['nullable', 'numeric', 'between:6,10', new HalfStepIncrement],
         ];
     }
 }

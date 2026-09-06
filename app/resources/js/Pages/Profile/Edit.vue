@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import DataExportForm from './Partials/DataExportForm.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
@@ -33,6 +34,10 @@ defineProps({
 
             <section class="py-6">
                 <UpdatePasswordForm />
+            </section>
+
+            <section class="py-6">
+                <DataExportForm />
             </section>
 
             <section class="py-6">

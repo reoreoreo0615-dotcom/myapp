@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BodyLog;
+use Illuminate\Support\LazyCollection;
 
 /**
  * body_logs への DB アクセスを担当するクエリクラス(Issue #21)。
@@ -54,6 +55,35 @@ class BodyLogRepository
                 'weight_kg' => (float) $log->weight_kg,
             ])
             ->all();
+    }
+
+    // ------------------------------------------------------------------
+    // CSVエクスポート(Issue #26①)
+    // ------------------------------------------------------------------
+
+    /**
+     * 体重記録の CSV エクスポート用に、measured_on 昇順で返す。
+     *
+     * 件数が多くてもメモリを使い切らないよう、配列にまとめず `cursor()`
+     * (LazyCollection)を返す。呼び出し側も全件を配列化せずそのままイテレートすること。
+     *
+     * @return LazyCollection<int, BodyLog>
+     */
+    public function exportRows(int $userId, ?string $fromDate, ?string $toDate): LazyCollection
+    {
+        return BodyLog::query()
+            ->where('user_id', $userId)
+            ->when(
+                $fromDate !== null,
+                fn ($query) => $query->where('measured_on', '>=', $fromDate),
+            )
+            ->when(
+                $toDate !== null,
+                fn ($query) => $query->where('measured_on', '<=', $toDate),
+            )
+            ->orderBy('measured_on')
+            ->select(['measured_on', 'weight_kg', 'body_fat_percentage', 'memo'])
+            ->cursor();
     }
 
     /**

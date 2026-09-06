@@ -894,4 +894,108 @@ class WorkoutSetRepositoryTest extends TestCase
 
         $this->assertSame([], $result);
     }
+
+    // ------------------------------------------------------------------
+    // exportRows() (Issue #26①)
+    // ------------------------------------------------------------------
+
+    public function test_export_rows_returns_rows_in_performed_on_order(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'name' => 'ベンチプレス']);
+        $workoutLater = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-05']);
+        $workoutEarlier = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workoutLater->id, 'exercise_id' => $exercise->id,
+            'set_number' => 1, 'weight' => 60, 'reps' => 8, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workoutEarlier->id, 'exercise_id' => $exercise->id,
+            'set_number' => 1, 'weight' => 55, 'reps' => 10, 'is_warmup' => false,
+        ]);
+
+        $rows = $this->repository->exportRows($user->id, null, null)->all();
+
+        $this->assertCount(2, $rows);
+        $this->assertSame('2026-09-01', $rows[0]->performed_on);
+        $this->assertSame('2026-09-05', $rows[1]->performed_on);
+        $this->assertSame('ベンチプレス', $rows[0]->exercise_name);
+    }
+
+    public function test_export_rows_respects_from_and_to_date_filters(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-08-01', 50, 10);
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-09-01', 55, 10);
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-10-01', 60, 10);
+
+        $rows = $this->repository->exportRows($user->id, '2026-08-15', '2026-09-15')->all();
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('2026-09-01', $rows[0]->performed_on);
+    }
+
+    public function test_export_rows_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+        $workout = Workout::factory()->create(['user_id' => $otherUser->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+
+        $rows = $this->repository->exportRows($user->id, null, null)->all();
+
+        $this->assertSame([], $rows);
+    }
+
+    public function test_export_rows_excludes_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+        ]);
+        $set->delete();
+
+        $rows = $this->repository->exportRows($user->id, null, null)->all();
+
+        $this->assertSame([], $rows);
+    }
+
+    public function test_export_rows_excludes_sets_of_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+        ]);
+        $workout->delete();
+
+        $rows = $this->repository->exportRows($user->id, null, null)->all();
+
+        $this->assertSame([], $rows);
+    }
+
+    public function test_export_rows_includes_rpe_and_memo(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'rpe' => 8.5, 'memo' => '調子が良かった', 'is_warmup' => true,
+        ]);
+
+        $rows = $this->repository->exportRows($user->id, null, null)->all();
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('8.5', $rows[0]->rpe);
+        $this->assertSame('調子が良かった', $rows[0]->memo);
+        $this->assertSame(1, (int) $rows[0]->is_warmup);
+    }
 }

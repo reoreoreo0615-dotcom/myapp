@@ -9,6 +9,7 @@ use App\Services\MuscleBalanceService;
 use App\Services\ProgressionService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
 
 /**
  * workout_sets への DB アクセスを担当するクエリクラス。
@@ -550,6 +551,51 @@ class WorkoutSetRepository
                 'best_this_month' => $row->best_this_month !== null ? (float) $row->best_this_month : null,
             ])
             ->all();
+    }
+
+    // ------------------------------------------------------------------
+    // CSVエクスポート(Issue #26①)
+    // ------------------------------------------------------------------
+
+    /**
+     * ワークアウト記録の CSV エクスポート用に、セット単位の行を
+     * performed_on 昇順(同日はワークアウトID→種目ID→セット番号の順)で返す。
+     *
+     * 論理削除済みの workout_sets / workouts は {@see activeWorkoutSetsQuery()}
+     * により除外される。件数が多くてもメモリを使い切らないよう、配列にまとめず
+     * `cursor()`(LazyCollection、PDO 側で1行ずつ読み出す)を返す。呼び出し側も
+     * 全件を配列化せずそのままイテレートすること。
+     *
+     * @return LazyCollection<int, object{performed_on: string, exercise_name: string, set_number: int, weight: string, reps: int, rpe: string|null, is_warmup: int, memo: string|null}>
+     */
+    public function exportRows(int $userId, ?string $fromDate, ?string $toDate): LazyCollection
+    {
+        return $this->activeWorkoutSetsQuery()
+            ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
+            ->where('workouts.user_id', $userId)
+            ->when(
+                $fromDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '>=', $fromDate),
+            )
+            ->when(
+                $toDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '<=', $toDate),
+            )
+            ->orderBy('workouts.performed_on')
+            ->orderBy('workouts.id')
+            ->orderBy('workout_sets.exercise_id')
+            ->orderBy('workout_sets.set_number')
+            ->select([
+                'workouts.performed_on',
+                'exercises.name as exercise_name',
+                'workout_sets.set_number',
+                'workout_sets.weight',
+                'workout_sets.reps',
+                'workout_sets.rpe',
+                'workout_sets.is_warmup',
+                'workout_sets.memo',
+            ])
+            ->cursor();
     }
 
     /**

@@ -312,6 +312,108 @@ class WorkoutRecordingTest extends TestCase
         ]);
     }
 
+    // ------------------------------------------------------------------
+    // RPE の入力(Issue #26②)。必須にしないことが最重要の制約。
+    // ------------------------------------------------------------------
+
+    /**
+     * 受入条件: RPE を入力しなくても、従来どおりタップ1回で記録できる。
+     */
+    public function test_recording_a_set_without_rpe_succeeds(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'started_at' => now()]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->actingAs($user)->post(route('workouts.sets.store', $workout), [
+            'exercise_id' => $exercise->id,
+            'weight' => 62.5,
+            'reps' => 8,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('workout_sets', [
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'rpe' => null,
+        ]);
+    }
+
+    public function test_recording_a_set_with_rpe_stores_it(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'started_at' => now()]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->actingAs($user)->post(route('workouts.sets.store', $workout), [
+            'exercise_id' => $exercise->id,
+            'weight' => 62.5,
+            'reps' => 8,
+            'rpe' => 8.5,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('workout_sets', [
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'rpe' => 8.5,
+        ]);
+    }
+
+    public function test_rpe_outside_six_to_ten_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'started_at' => now()]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->actingAs($user)->post(route('workouts.sets.store', $workout), [
+            'exercise_id' => $exercise->id,
+            'weight' => 62.5,
+            'reps' => 8,
+            'rpe' => 5.5,
+        ])->assertSessionHasErrors('rpe');
+
+        $this->actingAs($user)->post(route('workouts.sets.store', $workout), [
+            'exercise_id' => $exercise->id,
+            'weight' => 62.5,
+            'reps' => 8,
+            'rpe' => 10.5,
+        ])->assertSessionHasErrors('rpe');
+
+        $this->assertDatabaseCount('workout_sets', 0);
+    }
+
+    public function test_rpe_not_in_half_step_increments_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'started_at' => now()]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->actingAs($user)->post(route('workouts.sets.store', $workout), [
+            'exercise_id' => $exercise->id,
+            'weight' => 62.5,
+            'reps' => 8,
+            'rpe' => 8.3,
+        ])->assertSessionHasErrors('rpe');
+
+        $this->assertDatabaseCount('workout_sets', 0);
+    }
+
+    public function test_owner_can_update_a_sets_rpe(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'rpe' => null,
+        ]);
+
+        $this->actingAs($user)->patch(route('workouts.sets.update', [$workout, $set]), [
+            'weight' => 60.0,
+            'reps' => 8,
+            'rpe' => 9,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('workout_sets', [
+            'id' => $set->id, 'rpe' => 9,
+        ]);
+    }
+
     /**
      * 受入条件: ウォームアップは集計・ナビ計算から除外される。
      * ウォームアップだけを記録したワークアウトは「最後に行った」とはみなされず、

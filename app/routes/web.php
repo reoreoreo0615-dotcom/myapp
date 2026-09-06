@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BodyLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoutineController;
@@ -51,6 +52,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/exercises', [ExerciseController::class, 'store'])->name('exercises.store');
 
     Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
+
+    Route::get('/export/workouts', [ExportController::class, 'workoutSets'])->name('export.workouts');
+    Route::get('/export/body-weight', [ExportController::class, 'bodyLogs'])->name('export.body-logs');
 
     Route::get('/body-weight', [BodyLogController::class, 'index'])->name('body-logs.index');
     Route::post('/body-weight', [BodyLogController::class, 'store'])->name('body-logs.store');

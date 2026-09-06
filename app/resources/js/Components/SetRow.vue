@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import NumberStepper from '@/Components/NumberStepper.vue';
 import { formatNumber } from '@/Utils/format';
 
@@ -15,6 +15,11 @@ const props = defineProps({
     reps: {
         type: Number,
         required: true,
+    },
+    // RPE(主観的運動強度、6.0〜10.0)。任意項目のため既定は未入力(null)。
+    rpe: {
+        type: Number,
+        default: null,
     },
     unit: {
         type: String,
@@ -57,6 +62,7 @@ const props = defineProps({
 const emit = defineEmits([
     'update:weight',
     'update:reps',
+    'update:rpe',
     'record',
     'edit-start',
     'edit-cancel',
@@ -68,6 +74,18 @@ const weightText = computed(() => formatNumber(props.weight));
 
 // 入力欄(未完了 or 編集中)を出すかどうか。
 const showInputs = computed(() => !props.completed || props.editing);
+
+// RPE(Issue #26②)は任意項目のため、既定では折りたたんでおく。
+// 既に値が入っている(編集を開いたときなど)場合だけ最初から開く。
+const rpeOpen = ref(props.rpe !== null);
+
+function toggleRpe() {
+    rpeOpen.value = !rpeOpen.value;
+}
+
+function clearRpe() {
+    emit('update:rpe', null);
+}
 </script>
 
 <template>
@@ -86,6 +104,9 @@ const showInputs = computed(() => !props.completed || props.editing);
                     <span>{{ reps }}</span>
                     <span v-if="warmup" class="label-micro ml-1 text-[10px] text-ink-3">
                         アップ
+                    </span>
+                    <span v-if="rpe !== null" class="label-micro ml-1 text-[10px] text-ink-3">
+                        RPE {{ formatNumber(rpe) }}
                     </span>
                 </div>
                 <span
@@ -133,6 +154,41 @@ const showInputs = computed(() => !props.completed || props.editing);
                     @update:model-value="emit('update:reps', $event)"
                 />
             </template>
+        </div>
+
+        <div v-if="showInputs" class="mt-2">
+            <button
+                type="button"
+                class="label-micro text-[10px] text-ink-3 underline underline-offset-2"
+                @click="toggleRpe"
+            >
+                {{ rpeOpen ? 'RPEを閉じる' : 'RPEを記録する(任意)' }}
+            </button>
+
+            <div v-if="rpeOpen" class="mt-2">
+                <p class="label-micro text-[9px] leading-relaxed text-ink-3">
+                    あと何回上げられそうか。10=限界(あと0回)/ 9=あと1回 / 8=あと2回 / 7=あと3回 /
+                    6以下=余裕あり
+                </p>
+                <div class="mt-1.5 flex items-center gap-2">
+                    <NumberStepper
+                        compact
+                        :model-value="rpe ?? 6"
+                        :step="0.5"
+                        :min="6"
+                        :max="10"
+                        @update:model-value="emit('update:rpe', $event)"
+                    />
+                    <button
+                        v-if="rpe !== null"
+                        type="button"
+                        class="label-micro text-[10px] text-ink-3 underline underline-offset-2"
+                        @click="clearRpe"
+                    >
+                        未入力にする
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div v-if="showInputs" class="mt-2 flex gap-2">

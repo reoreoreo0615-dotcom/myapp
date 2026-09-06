@@ -157,13 +157,14 @@ class WorkoutController extends Controller
         WorkoutSet::query()
             ->where('workout_id', $workout->id)
             ->orderBy('set_number')
-            ->get(['id', 'exercise_id', 'set_number', 'weight', 'reps', 'is_warmup'])
+            ->get(['id', 'exercise_id', 'set_number', 'weight', 'reps', 'rpe', 'is_warmup'])
             ->each(function (WorkoutSet $set) use (&$recordedSets) {
                 $recordedSets[$set->exercise_id][] = [
                     'id' => $set->id,
                     'set_number' => $set->set_number,
                     'weight' => (float) $set->weight,
                     'reps' => $set->reps,
+                    'rpe' => $set->rpe !== null ? (float) $set->rpe : null,
                     'is_warmup' => (bool) $set->is_warmup,
                 ];
             });
