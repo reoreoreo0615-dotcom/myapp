@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ExerciseHistoryChart from '@/Components/ExerciseHistoryChart.vue';
+import PlateauNotice from '@/Components/PlateauNotice.vue';
 import Rule from '@/Components/Rule.vue';
 import StatValue from '@/Components/StatValue.vue';
 import { formatNumber } from '@/Utils/format';
@@ -23,7 +24,8 @@ const props = defineProps({
         default: null,
     },
     // null、または { exercise, chart: {metric, metric_label, points}, sets, personalBest,
-    //   latestBodyweightRatio: {date, ratio, body_weight_kg, estimated_one_rep_max_with_bodyweight} | null }
+    //   latestBodyweightRatio: {date, ratio, body_weight_kg, estimated_one_rep_max_with_bodyweight} | null,
+    //   plateau: { status, sessions_without_update, baseline: {weight,reps}, suggestions: [...] } | null }
     history: {
         type: Object,
         default: null,
@@ -153,6 +155,8 @@ function formatMonthDay(isoDate) {
                         : '推定1RM(1回だけ挙げられる重さの目安)の推移'
                 }}
             </p>
+
+            <PlateauNotice v-if="history.plateau" :plateau="history.plateau" />
 
             <Rule class="mt-4" />
 

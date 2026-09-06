@@ -673,4 +673,225 @@ class WorkoutSetRepositoryTest extends TestCase
 
         $this->assertSame([], $result);
     }
+
+    // ------------------------------------------------------------------
+    // sessionTopSetsForExercises() (Issue #24①)
+    // ------------------------------------------------------------------
+
+    private function createWorkoutWithTopSet(User $user, Exercise $exercise, string $performedOn, float $weight, int $reps): void
+    {
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => $performedOn]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => $weight, 'reps' => $reps, 'is_warmup' => false,
+        ]);
+    }
+
+    public function test_session_top_sets_returns_sessions_in_ascending_order_per_exercise(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-09-05', 62.5, 8);
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-09-01', 60.0, 8);
+
+        $result = $this->repository->sessionTopSetsForExercises([$exercise->id], $user->id);
+
+        $this->assertSame([
+            ['performed_on' => '2026-09-01', 'weight' => 60.0, 'reps' => 8],
+            ['performed_on' => '2026-09-05', 'weight' => 62.5, 'reps' => 8],
+        ], $result[$exercise->id]);
+    }
+
+    public function test_session_top_sets_excludes_warmup_sets(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 100.0, 'reps' => 1, 'is_warmup' => true,
+        ]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->sessionTopSetsForExercises([$exercise->id], $user->id);
+
+        $this->assertSame([
+            ['performed_on' => '2026-09-01', 'weight' => 60.0, 'reps' => 8],
+        ], $result[$exercise->id]);
+    }
+
+    public function test_session_top_sets_picks_the_max_weight_set_within_a_session(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'set_number' => 1,
+            'weight' => 60.0, 'reps' => 10, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'set_number' => 2,
+            'weight' => 62.5, 'reps' => 6, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->sessionTopSetsForExercises([$exercise->id], $user->id);
+
+        $this->assertSame([
+            ['performed_on' => '2026-09-01', 'weight' => 62.5, 'reps' => 6],
+        ], $result[$exercise->id]);
+    }
+
+    public function test_session_top_sets_with_empty_exercise_ids_returns_all_the_users_exercises(): void
+    {
+        $user = User::factory()->create();
+        $exerciseA = Exercise::factory()->create(['user_id' => $user->id]);
+        $exerciseB = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $this->createWorkoutWithTopSet($user, $exerciseA, '2026-09-01', 60.0, 8);
+        $this->createWorkoutWithTopSet($user, $exerciseB, '2026-09-01', 40.0, 12);
+
+        $result = $this->repository->sessionTopSetsForExercises([], $user->id);
+
+        $this->assertArrayHasKey($exerciseA->id, $result);
+        $this->assertArrayHasKey($exerciseB->id, $result);
+    }
+
+    public function test_session_top_sets_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->createWorkoutWithTopSet($otherUser, $exercise, '2026-09-01', 100.0, 5);
+
+        $result = $this->repository->sessionTopSetsForExercises([$exercise->id], $user->id);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_session_top_sets_respects_on_or_before_date_and_excluded_workout_id(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $this->createWorkoutWithTopSet($user, $exercise, '2026-09-01', 60.0, 8);
+        $futureWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-10']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $futureWorkout->id, 'exercise_id' => $exercise->id,
+            'weight' => 999.0, 'reps' => 1, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->sessionTopSetsForExercises(
+            [$exercise->id],
+            $user->id,
+            onOrBeforeDate: '2026-09-05',
+            excludeWorkoutId: $futureWorkout->id,
+        );
+
+        $this->assertSame([
+            ['performed_on' => '2026-09-01', 'weight' => 60.0, 'reps' => 8],
+        ], $result[$exercise->id]);
+    }
+
+    public function test_session_top_sets_excludes_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->sessionTopSetsForExercises([$exercise->id], $user->id);
+
+        $this->assertSame([], $result);
+    }
+
+    // ------------------------------------------------------------------
+    // movementTypeSetCounts() (Issue #24②)
+    // ------------------------------------------------------------------
+
+    public function test_movement_type_set_counts_groups_sets_by_exercise_movement_type(): void
+    {
+        $user = User::factory()->create();
+        $pushExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $pullExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'pull']);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => now()->toDateString()]);
+
+        WorkoutSet::factory()->count(3)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pushExercise->id, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->count(2)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pullExercise->id, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->movementTypeSetCounts($user->id, now()->subWeeks(4)->toDateString());
+
+        $this->assertSame(3, $result['push']);
+        $this->assertSame(2, $result['pull']);
+        $this->assertArrayNotHasKey('legs', $result);
+    }
+
+    public function test_movement_type_set_counts_excludes_warmup_sets(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => now()->toDateString()]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => true,
+        ]);
+
+        $result = $this->repository->movementTypeSetCounts($user->id, now()->subWeeks(4)->toDateString());
+
+        $this->assertArrayNotHasKey('push', $result);
+    }
+
+    public function test_movement_type_set_counts_excludes_sets_before_the_since_date(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $oldWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => now()->subWeeks(10)->toDateString()]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $oldWorkout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->movementTypeSetCounts($user->id, now()->subWeeks(4)->toDateString());
+
+        $this->assertArrayNotHasKey('push', $result);
+    }
+
+    public function test_movement_type_set_counts_ignores_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => now()->toDateString()]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->movementTypeSetCounts($user->id, now()->subWeeks(4)->toDateString());
+
+        $this->assertArrayNotHasKey('push', $result);
+    }
+
+    public function test_movement_type_set_counts_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => null, 'movement_type' => 'push']);
+        $workout = Workout::factory()->create(['user_id' => $otherUser->id, 'performed_on' => now()->toDateString()]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->movementTypeSetCounts($user->id, now()->subWeeks(4)->toDateString());
+
+        $this->assertSame([], $result);
+    }
 }

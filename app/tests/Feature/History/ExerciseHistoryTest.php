@@ -345,6 +345,96 @@ class ExerciseHistoryTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // 停滞判定(Issue #24①)
+    // ------------------------------------------------------------------
+
+    public function test_plateau_is_null_when_not_enough_sessions_exist(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(1)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page->where('history.plateau', null));
+    }
+
+    public function test_plateau_is_detected_for_a_stagnant_exercise(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create([
+            'user_id' => $user->id,
+            'is_bodyweight' => false,
+            'weight_increment' => 2.5,
+            'target_rep_min' => 8,
+            'target_rep_max' => 12,
+        ]);
+
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(10)->toDateString(), [['weight' => 50.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(8)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(6)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(4)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(2)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.plateau.status', 'stagnant')
+            ->where('history.plateau.sessions_without_update', 3)
+        );
+    }
+
+    public function test_plateau_detection_ignores_the_period_filter(): void
+    {
+        // 期間フィルタを絞っても、停滞判定は全期間のセッション履歴を見る
+        // (baseline が視界から消えて誤判定しないようにするため)。
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id, 'is_bodyweight' => false]);
+
+        $this->createWorkoutWithSets($user, $exercise, now()->subMonths(10)->toDateString(), [['weight' => 50.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subMonths(9)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(6)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(4)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(2)->toDateString(), [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', [
+            'exercise_id' => $exercise->id,
+            'period' => '3m',
+        ]));
+
+        $response->assertInertia(fn ($page) => $page
+            // グラフは3ヶ月分(3点)だけだが、停滞判定は10ヶ月前のセッションも見て成立する。
+            ->has('history.chart.points', 3)
+            ->where('history.plateau.status', 'stagnant')
+        );
+    }
+
+    public function test_plateau_for_bodyweight_exercise_uses_reps(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create([
+            'user_id' => $user->id,
+            'is_bodyweight' => true,
+            'weight_increment' => 1.25,
+            'target_rep_min' => 6,
+            'target_rep_max' => 15,
+        ]);
+
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(10)->toDateString(), [['weight' => 0.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(8)->toDateString(), [['weight' => 0.0, 'reps' => 12]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(6)->toDateString(), [['weight' => 0.0, 'reps' => 12]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(4)->toDateString(), [['weight' => 0.0, 'reps' => 12]]);
+        $this->createWorkoutWithSets($user, $exercise, now()->subWeeks(2)->toDateString(), [['weight' => 0.0, 'reps' => 12]]);
+
+        $response = $this->actingAs($user)->get(route('history.index', ['exercise_id' => $exercise->id]));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('history.plateau.status', 'stagnant')
+            ->where('history.plateau.baseline.reps', 12)
+        );
+    }
+
+    // ------------------------------------------------------------------
     // 期間フィルタ
     // ------------------------------------------------------------------
 

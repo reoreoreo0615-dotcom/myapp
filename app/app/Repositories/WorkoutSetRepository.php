@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\WorkoutSet;
 use App\Services\DashboardSummaryService;
 use App\Services\ExerciseHistoryService;
+use App\Services\MuscleBalanceService;
 use App\Services\ProgressionService;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -337,6 +338,101 @@ class WorkoutSetRepository
             'max_reps' => $row?->max_reps !== null ? (int) $row->max_reps : null,
             'max_estimated_1rm' => $row?->max_estimated_1rm !== null ? (float) $row->max_estimated_1rm : null,
         ];
+    }
+
+    // ------------------------------------------------------------------
+    // 停滞検知・部位バランス(Issue #24)
+    // ------------------------------------------------------------------
+
+    /**
+     * 指定した種目群(または全種目)について、セッション(ワークアウト)ごとの
+     * トップセット(ウォームアップ除く)を performed_on 昇順で返す。
+     * {@see PlateauService} の停滞判定に使う全期間のセッション履歴。
+     *
+     * 種目数に関わらず1クエリで完結させる(ダッシュボードで全種目分をまとめて
+     * 洗い出す用途、記録画面で表示中の種目分をまとめて取得する用途の両方で使う)。
+     *
+     * @param  array<int, int>  $exerciseIds  空配列なら、そのユーザーが記録したことのある全種目が対象
+     * @param  string|null  $onOrBeforeDate  指定すると、この日付(performed_on)以前のワークアウトだけを対象にする
+     *                                       (Issue #23②と同じ理由: 過去日のワークアウトを開いたとき、
+     *                                       その日付より後の記録から停滞を判定しないため)
+     * @param  int|null  $excludeWorkoutId  指定すると、この workout_id 自身は候補から除く
+     *                                      (記録中のワークアウト自身のセットで汚染しないため)
+     * @return array<int, array<int, array{performed_on: string, weight: float, reps: int}>> exercise_id をキーにした、performed_on 昇順のセッション配列
+     */
+    public function sessionTopSetsForExercises(
+        array $exerciseIds,
+        int $userId,
+        ?string $onOrBeforeDate = null,
+        ?int $excludeWorkoutId = null,
+    ): array {
+        $ranked = $this->activeWorkoutSetsQuery()
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->when(
+                $exerciseIds !== [],
+                fn ($query) => $query->whereIn('workout_sets.exercise_id', $exerciseIds),
+            )
+            ->when(
+                $onOrBeforeDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '<=', $onOrBeforeDate),
+            )
+            ->when(
+                $excludeWorkoutId !== null,
+                fn ($query) => $query->where('workouts.id', '!=', $excludeWorkoutId),
+            )
+            ->select([
+                'workout_sets.exercise_id',
+                'workouts.id as workout_id',
+                'workouts.performed_on',
+                'workout_sets.weight',
+                'workout_sets.reps',
+            ])
+            ->selectRaw(
+                'ROW_NUMBER() OVER (PARTITION BY workout_sets.exercise_id, workouts.id ORDER BY workout_sets.weight DESC, workout_sets.reps DESC) AS rn'
+            );
+
+        $rows = DB::query()
+            ->fromSub($ranked, 'ranked')
+            ->where('rn', 1)
+            ->orderBy('exercise_id')
+            ->orderBy('performed_on')
+            ->orderBy('workout_id')
+            ->get(['exercise_id', 'workout_id', 'performed_on', 'weight', 'reps']);
+
+        $result = [];
+
+        foreach ($rows as $row) {
+            $result[(int) $row->exercise_id][] = [
+                'performed_on' => (string) $row->performed_on,
+                'weight' => (float) $row->weight,
+                'reps' => (int) $row->reps,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * 部位バランス(Issue #24②)向けに、期間内の movement_type 別セット数を集計する。
+     * 指標にセット数を採用した理由は {@see MuscleBalanceService} のコメント参照。
+     *
+     * is_warmup = false のみ、workouts.performed_on >= $sinceDate。
+     *
+     * @return array<string, int> movement_type の値(push/pull/legs/core)をキーにしたセット数。記録が無いキーは含まれない。
+     */
+    public function movementTypeSetCounts(int $userId, string $sinceDate): array
+    {
+        return $this->activeWorkoutSetsQuery()
+            ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
+            ->where('workouts.user_id', $userId)
+            ->where('workout_sets.is_warmup', false)
+            ->where('workouts.performed_on', '>=', $sinceDate)
+            ->groupBy('exercises.movement_type')
+            ->selectRaw('exercises.movement_type, COUNT(*) as set_count')
+            ->pluck('set_count', 'movement_type')
+            ->map(fn ($count): int => (int) $count)
+            ->all();
     }
 
     // ------------------------------------------------------------------

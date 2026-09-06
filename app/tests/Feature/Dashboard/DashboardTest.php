@@ -433,6 +433,164 @@ class DashboardTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // 停滞している種目(Issue #24①)
+    // ------------------------------------------------------------------
+
+    public function test_plateau_exercises_is_empty_when_no_records_exist(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.plateauExercises', []));
+    }
+
+    public function test_plateau_exercises_includes_a_stagnant_exercise(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'ベンチプレス',
+            'is_bodyweight' => false,
+            'weight_increment' => 2.5,
+            'target_rep_min' => 8,
+            'target_rep_max' => 12,
+        ]);
+
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-01', [['weight' => 50.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-08', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-15', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-22', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-29', [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.plateauExercises.0.exerciseId', $exercise->id)
+            ->where('summary.plateauExercises.0.exerciseName', 'ベンチプレス')
+            ->where('summary.plateauExercises.0.status', 'stagnant')
+            ->where('summary.plateauExercises.0.sessionsWithoutUpdate', 3)
+        );
+    }
+
+    public function test_plateau_exercises_excludes_an_exercise_that_is_still_progressing(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-01', [['weight' => 50.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-08', [['weight' => 55.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-15', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($user, $exercise, '2026-08-22', [['weight' => 65.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.plateauExercises', []));
+    }
+
+    public function test_plateau_exercises_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $this->createWorkoutWithSets($otherUser, $exercise, '2026-08-01', [['weight' => 50.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($otherUser, $exercise, '2026-08-08', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($otherUser, $exercise, '2026-08-15', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($otherUser, $exercise, '2026-08-22', [['weight' => 60.0, 'reps' => 8]]);
+        $this->createWorkoutWithSets($otherUser, $exercise, '2026-08-29', [['weight' => 60.0, 'reps' => 8]]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.plateauExercises', []));
+    }
+
+    // ------------------------------------------------------------------
+    // 部位バランス(Issue #24②)
+    // ------------------------------------------------------------------
+
+    public function test_muscle_balance_is_insufficient_when_few_sets_are_recorded(): void
+    {
+        $user = User::factory()->create();
+        $pushExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $this->createWorkoutWithSets($user, $pushExercise, '2026-09-01', [
+            ['weight' => 60.0, 'reps' => 8], ['weight' => 60.0, 'reps' => 8],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.muscleBalance.sufficientData', false)
+            ->where('summary.muscleBalance.isImbalanced', false)
+        );
+    }
+
+    public function test_muscle_balance_warns_when_push_dominates(): void
+    {
+        $user = User::factory()->create();
+        $pushExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $pullExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'pull']);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+
+        WorkoutSet::factory()->count(15)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pushExercise->id, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->count(5)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pullExercise->id, 'is_warmup' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('summary.muscleBalance.sufficientData', true)
+            ->where('summary.muscleBalance.isImbalanced', true)
+            ->where('summary.muscleBalance.dominant', 'push')
+            ->where('summary.muscleBalance.counts.push', 15)
+            ->where('summary.muscleBalance.counts.pull', 5)
+        );
+    }
+
+    public function test_muscle_balance_ignores_sets_older_than_the_4_week_window(): void
+    {
+        $user = User::factory()->create();
+        $pushExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'push']);
+        $pullExercise = Exercise::factory()->create(['user_id' => $user->id, 'movement_type' => 'pull']);
+
+        // 4週間より前(基準日2026-09-03の10週間前)。
+        $oldWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-06-25']);
+        WorkoutSet::factory()->count(15)->create([
+            'workout_id' => $oldWorkout->id, 'exercise_id' => $pushExercise->id, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->count(5)->create([
+            'workout_id' => $oldWorkout->id, 'exercise_id' => $pullExercise->id, 'is_warmup' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.muscleBalance.sufficientData', false));
+    }
+
+    public function test_muscle_balance_does_not_leak_another_users_data(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $pushExercise = Exercise::factory()->create(['user_id' => null, 'movement_type' => 'push']);
+        $pullExercise = Exercise::factory()->create(['user_id' => null, 'movement_type' => 'pull']);
+        $workout = Workout::factory()->create(['user_id' => $otherUser->id, 'performed_on' => '2026-09-01']);
+
+        WorkoutSet::factory()->count(15)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pushExercise->id, 'is_warmup' => false,
+        ]);
+        WorkoutSet::factory()->count(5)->create([
+            'workout_id' => $workout->id, 'exercise_id' => $pullExercise->id, 'is_warmup' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertInertia(fn ($page) => $page->where('summary.muscleBalance.sufficientData', false));
+    }
+
+    // ------------------------------------------------------------------
     // 他ユーザーのデータが混入しないこと
     // ------------------------------------------------------------------
 

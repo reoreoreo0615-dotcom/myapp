@@ -198,6 +198,72 @@ class WorkoutRecordingTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // 停滞している種目の表示(Issue #24①)
+    // ------------------------------------------------------------------
+
+    public function test_show_page_includes_plateau_status_for_a_stagnant_exercise(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create([
+            'user_id' => null,
+            'weight_increment' => 2.5,
+            'target_rep_min' => 8,
+            'target_rep_max' => 12,
+        ]);
+
+        foreach ([
+            ['2026-08-01', 50.0],
+            ['2026-08-08', 60.0],
+            ['2026-08-15', 60.0],
+            ['2026-08-22', 60.0],
+            ['2026-08-29', 60.0],
+        ] as [$date, $weight]) {
+            $priorWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => $date]);
+            WorkoutSet::factory()->create([
+                'workout_id' => $priorWorkout->id, 'exercise_id' => $exercise->id,
+                'weight' => $weight, 'reps' => 8, 'is_warmup' => false,
+            ]);
+        }
+
+        $workout = Workout::create([
+            'user_id' => $user->id,
+            'performed_on' => '2026-09-05',
+            'started_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workouts.show', $workout));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('plateau.'.$exercise->id.'.status', 'stagnant')
+            ->where('plateau.'.$exercise->id.'.exercise_id', $exercise->id)
+        );
+    }
+
+    public function test_show_page_omits_plateau_for_an_exercise_that_is_still_progressing(): void
+    {
+        $user = User::factory()->create();
+        $routine = $this->createRoutineWithExercises($user, 1);
+        $exercise = $routine->exercises()->first();
+
+        $priorWorkout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $priorWorkout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+
+        $workout = Workout::create([
+            'user_id' => $user->id,
+            'routine_id' => $routine->id,
+            'performed_on' => '2026-09-05',
+            'started_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workouts.show', $workout));
+
+        $response->assertInertia(fn ($page) => $page->where('plateau', []));
+    }
+
+    // ------------------------------------------------------------------
     // セットの記録(タップ1回で1セット)
     // ------------------------------------------------------------------
 

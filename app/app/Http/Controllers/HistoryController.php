@@ -6,6 +6,7 @@ use App\Models\Exercise;
 use App\Repositories\BodyLogRepository;
 use App\Repositories\WorkoutSetRepository;
 use App\Services\ExerciseHistoryService;
+use App\Services\PlateauAnalysisService;
 use App\Support\HistoryPeriod;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +18,7 @@ class HistoryController extends Controller
         private readonly WorkoutSetRepository $workoutSetRepository,
         private readonly BodyLogRepository $bodyLogRepository,
         private readonly ExerciseHistoryService $historyService,
+        private readonly PlateauAnalysisService $plateauAnalysisService,
     ) {}
 
     /**
@@ -71,6 +73,21 @@ class HistoryController extends Controller
 
             $chart = $this->historyService->buildChart($exercise->is_bodyweight, $topSets, $bodyLogs);
 
+            // Issue #24①: 停滞判定は表示中の期間フィルタ('3m'/'6m')に関わらず
+            // 全期間のセッション履歴で行う(期間を絞ると baseline=過去の自己ベスト
+            // 自体が視界から消え、誤って「停滞なし」と判定しかねないため)。
+            $plateauSessions = $this->workoutSetRepository->sessionTopSetsForExercises([$exercise->id], $userId);
+            $plateau = $this->plateauAnalysisService->analyze([
+                [
+                    'id' => $exercise->id,
+                    'name' => $exercise->name,
+                    'is_bodyweight' => $exercise->is_bodyweight,
+                    'weight_increment' => (float) $exercise->weight_increment,
+                    'target_rep_min' => $exercise->target_rep_min,
+                    'target_rep_max' => $exercise->target_rep_max,
+                ],
+            ], $plateauSessions)[0] ?? null;
+
             $selected = [
                 'exercise' => [
                     'id' => $exercise->id,
@@ -82,6 +99,7 @@ class HistoryController extends Controller
                 'sets' => $allSets,
                 'personalBest' => $this->historyService->buildPersonalBest($exercise->is_bodyweight, $personalBestRaw),
                 'latestBodyweightRatio' => $this->historyService->latestBodyweightRatio($chart['points']),
+                'plateau' => $plateau,
             ];
         }
 

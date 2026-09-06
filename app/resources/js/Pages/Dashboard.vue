@@ -1,5 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PlateauNotice from '@/Components/PlateauNotice.vue';
+import RatioBar from '@/Components/RatioBar.vue';
 import Rule from '@/Components/Rule.vue';
 import StatValue from '@/Components/StatValue.vue';
 import { formatNumber } from '@/Utils/format';
@@ -10,12 +12,27 @@ const props = defineProps({
     // { hasRecords, weeklyVolume: { thisWeek, lastWeek, changePercent }, streakWeeks,
     //   monthlyRecordUpdates, latestPersonalBest: { exerciseName, isBodyweight, weight, reps, date } | null,
     //   activeWorkoutId: number|null, routinesCount: number,
-    //   bodyWeight: { current, measuredOn, changeFromPrevious } | null }
+    //   bodyWeight: { current, measuredOn, changeFromPrevious } | null,
+    //   plateauExercises: [{ exerciseId, exerciseName, isBodyweight, status, sessionsWithoutUpdate,
+    //                        baseline: {weight,reps}, suggestions: [...] }],
+    //   muscleBalance: { sufficientData, counts: {push,pull,legs,core}, pushPullTotal,
+    //                     isImbalanced, dominant: 'push'|'pull'|null, ratio } }
     summary: {
         type: Object,
         required: true,
     },
 });
+
+// PlateauNotice.vue は History / 記録画面と共通の(snake_case の)形を受け取るため、
+// このページの camelCase な summary.plateauExercises の要素をその場で変換する。
+function toPlateauNoticeShape(item) {
+    return {
+        status: item.status,
+        sessions_without_update: item.sessionsWithoutUpdate,
+        baseline: item.baseline,
+        suggestions: item.suggestions,
+    };
+}
 
 // Issue #19: 「メニューを作ってから記録する」という画面間のつながりが
 // 分からない、というフィードバックへの対処。優先順位は3択:
@@ -189,5 +206,44 @@ const bodyWeightChangeLabel = computed(() => {
         </div>
 
         <Rule v-if="summary.hasRecords" class="mt-8" />
+
+        <!--
+            部位バランス(Issue #24②)。記録が少ない期間(直近4週の push+pull
+            セット数が少ない)は誤解を招くため、判定不能なときは何も出さない。
+        -->
+        <div v-if="summary.muscleBalance.sufficientData" class="mt-8">
+            <p class="label-micro text-[11px] text-ink-3">部位バランス(直近4週・セット数)</p>
+            <RatioBar
+                class="mt-3"
+                :left-value="summary.muscleBalance.counts.push"
+                :right-value="summary.muscleBalance.counts.pull"
+                left-label="PUSH"
+                right-label="PULL"
+                :warn="summary.muscleBalance.isImbalanced"
+            />
+            <p v-if="summary.muscleBalance.isImbalanced" class="mt-2 text-xs text-warn">
+                {{ summary.muscleBalance.dominant === 'push' ? '押す種目' : '引く種目' }}に偏っているかもしれません。
+            </p>
+        </div>
+
+        <Rule v-if="summary.muscleBalance.sufficientData" class="mt-8" />
+
+        <!-- 停滞している種目(Issue #24①)。無い場合は何も表示しない。 -->
+        <div v-if="summary.plateauExercises.length > 0" class="mt-8">
+            <p class="label-micro text-[11px] text-ink-3">停滞している種目</p>
+            <div class="mt-3 space-y-4">
+                <div v-for="item in summary.plateauExercises" :key="item.exerciseId">
+                    <Link
+                        :href="route('history.index', { exercise_id: item.exerciseId })"
+                        class="text-sm text-ink hover:text-accent"
+                    >
+                        {{ item.exerciseName }}
+                    </Link>
+                    <PlateauNotice :plateau="toPlateauNoticeShape(item)" />
+                </div>
+            </div>
+        </div>
+
+        <Rule v-if="summary.plateauExercises.length > 0" class="mt-8" />
     </AuthenticatedLayout>
 </template>

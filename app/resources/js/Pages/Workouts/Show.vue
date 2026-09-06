@@ -5,6 +5,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import FirstTimeTip from '@/Components/FirstTimeTip.vue';
 import IntervalTimer from '@/Components/IntervalTimer.vue';
 import Modal from '@/Components/Modal.vue';
+import PlateauNotice from '@/Components/PlateauNotice.vue';
 import Rule from '@/Components/Rule.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import SetRow from '@/Components/SetRow.vue';
@@ -50,6 +51,13 @@ const props = defineProps({
     },
     // exercise_id をキーにした [{id,set_number,weight,reps,is_warmup}]
     recordedSets: {
+        type: Object,
+        required: true,
+    },
+    // Issue #24①: 停滞している種目のみ exercise_id をキーに含まれる
+    // { status, sessions_without_update, baseline: {weight,reps}, suggestions: [...] }。
+    // 記録操作を邪魔しないよう、あくまで補足情報として下に添えるだけにする。
+    plateau: {
         type: Object,
         required: true,
     },
@@ -511,6 +519,8 @@ function finishWorkout() {
                 <p v-else class="label-micro mt-3 text-[11px] text-ink-3">
                     初めての種目です。最初のセットを記録してください。
                 </p>
+
+                <PlateauNotice v-if="plateau[exercise.id]" :plateau="plateau[exercise.id]" />
 
                 <Rule class="mt-4" />
 

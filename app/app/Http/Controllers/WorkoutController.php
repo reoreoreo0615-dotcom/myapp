@@ -7,6 +7,8 @@ use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\Workout;
 use App\Models\WorkoutSet;
+use App\Repositories\WorkoutSetRepository;
+use App\Services\PlateauAnalysisService;
 use App\Services\WorkoutProgressionSnapshotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,8 @@ class WorkoutController extends Controller
 {
     public function __construct(
         private readonly WorkoutProgressionSnapshotService $snapshotService,
+        private readonly WorkoutSetRepository $workoutSetRepository,
+        private readonly PlateauAnalysisService $plateauAnalysisService,
     ) {}
 
     /**
@@ -132,6 +136,23 @@ class WorkoutController extends Controller
             ];
         }
 
+        // Issue #24①: この画面に表示中の種目について、停滞していないかを
+        // まとめて1クエリで判定する(種目数によらずクエリ数が変わらないことを
+        // test_show_page_query_count_does_not_scale_with_number_of_exercises() で担保)。
+        // Issue #23②と同じ理由で、過去日のワークアウトはその日付以前のセッションだけを見て
+        // 判定し、この workout 自身のセットで汚染しない。
+        $plateauSessions = $this->workoutSetRepository->sessionTopSetsForExercises(
+            array_keys($exerciseModels),
+            $userId,
+            $workout->performed_on->format('Y-m-d'),
+            $workout->id,
+        );
+
+        $plateauByExerciseId = [];
+        foreach ($this->plateauAnalysisService->analyze($exercisesPayload, $plateauSessions) as $row) {
+            $plateauByExerciseId[$row['exercise_id']] = $row;
+        }
+
         $recordedSets = [];
         WorkoutSet::query()
             ->where('workout_id', $workout->id)
@@ -169,6 +190,7 @@ class WorkoutController extends Controller
             'canAddExercises' => $workout->routine_id === null && $canEditSets,
             'exercises' => array_values($exercisesPayload),
             'progression' => $progression,
+            'plateau' => $plateauByExerciseId,
             'recordedSets' => $recordedSets,
         ]);
     }

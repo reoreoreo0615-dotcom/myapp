@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\Workout;
 use App\Repositories\BodyLogRepository;
@@ -22,12 +23,22 @@ use Illuminate\Support\Carbon;
  *     記録済みのセットは実績として扱う({@see WorkoutSetRepository} の
  *     他の集計メソッド(personalBest 等)も同様に finished_at を見ていないため、
  *     ダッシュボードだけ挙動を変えると数値の整合性が崩れる)。
+ *
+ * Issue #24: 停滞している種目の一覧({@see PlateauAnalysisService})と
+ * 部位バランス({@see MuscleBalanceService})もここで組み立てる。
  */
 class DashboardSummaryService
 {
+    /**
+     * 部位バランスの集計対象期間(直近4週間。{@see MuscleBalanceService} の判断2)。
+     */
+    private const MUSCLE_BALANCE_PERIOD_WEEKS = 4;
+
     public function __construct(
         private readonly WorkoutSetRepository $workoutSetRepository,
         private readonly BodyLogRepository $bodyLogRepository,
+        private readonly PlateauAnalysisService $plateauAnalysisService,
+        private readonly MuscleBalanceService $muscleBalanceService,
     ) {}
 
     /**
@@ -40,6 +51,8 @@ class DashboardSummaryService
      *     activeWorkoutId: int|null,
      *     routinesCount: int,
      *     bodyWeight: array{current: float, measuredOn: string, changeFromPrevious: float|null}|null,
+     *     plateauExercises: array<int, array{exerciseId: int, exerciseName: string, isBodyweight: bool, status: 'stagnant'|'declining', sessionsWithoutUpdate: int, baseline: array{weight: float, reps: int}, suggestions: array<int, array<string, mixed>>}>,
+     *     muscleBalance: array{sufficientData: bool, counts: array{push: int, pull: int, legs: int, core: int}, pushPullTotal: int, isImbalanced: bool, dominant: 'push'|'pull'|null, ratio: float|null},
      * }
      */
     public function build(int $userId): array
@@ -82,6 +95,67 @@ class DashboardSummaryService
                 ->count(),
             // Issue #21: 現在の体重と直近の変化。
             'bodyWeight' => $this->buildBodyWeightTile($userId),
+            // Issue #24①: 停滞している種目の一覧。
+            'plateauExercises' => $this->buildPlateauExercises($userId),
+            // Issue #24②: 部位バランス(push/pull)。
+            'muscleBalance' => $this->buildMuscleBalance($userId),
+        ];
+    }
+
+    /**
+     * @return array<int, array{exerciseId: int, exerciseName: string, isBodyweight: bool, status: 'stagnant'|'declining', sessionsWithoutUpdate: int, baseline: array{weight: float, reps: int}, suggestions: array<int, array<string, mixed>>}>
+     */
+    private function buildPlateauExercises(int $userId): array
+    {
+        // 空配列 = 全種目(WorkoutSetRepository::sessionTopSetsForExercises() の規約)。
+        $sessionsByExerciseId = $this->workoutSetRepository->sessionTopSetsForExercises([], $userId);
+
+        if ($sessionsByExerciseId === []) {
+            return [];
+        }
+
+        $exercises = Exercise::query()
+            ->whereIn('id', array_keys($sessionsByExerciseId))
+            ->get(['id', 'name', 'is_bodyweight', 'weight_increment', 'target_rep_min', 'target_rep_max'])
+            ->map(fn (Exercise $exercise): array => [
+                'id' => $exercise->id,
+                'name' => $exercise->name,
+                'is_bodyweight' => $exercise->is_bodyweight,
+                'weight_increment' => (float) $exercise->weight_increment,
+                'target_rep_min' => $exercise->target_rep_min,
+                'target_rep_max' => $exercise->target_rep_max,
+            ])
+            ->all();
+
+        $analyzed = $this->plateauAnalysisService->analyze($exercises, $sessionsByExerciseId);
+
+        return array_map(fn (array $row): array => [
+            'exerciseId' => $row['exercise_id'],
+            'exerciseName' => $row['exercise_name'],
+            'isBodyweight' => $row['is_bodyweight'],
+            'status' => $row['status'],
+            'sessionsWithoutUpdate' => $row['sessions_without_update'],
+            'baseline' => $row['baseline'],
+            'suggestions' => $row['suggestions'],
+        ], $analyzed);
+    }
+
+    /**
+     * @return array{sufficientData: bool, counts: array{push: int, pull: int, legs: int, core: int}, pushPullTotal: int, isImbalanced: bool, dominant: 'push'|'pull'|null, ratio: float|null}
+     */
+    private function buildMuscleBalance(int $userId): array
+    {
+        $sinceDate = now()->subWeeks(self::MUSCLE_BALANCE_PERIOD_WEEKS)->toDateString();
+        $counts = $this->workoutSetRepository->movementTypeSetCounts($userId, $sinceDate);
+        $result = $this->muscleBalanceService->analyze($counts);
+
+        return [
+            'sufficientData' => $result['sufficient_data'],
+            'counts' => $result['counts'],
+            'pushPullTotal' => $result['push_pull_total'],
+            'isImbalanced' => $result['is_imbalanced'],
+            'dominant' => $result['dominant'],
+            'ratio' => $result['ratio'],
         ];
     }
 
