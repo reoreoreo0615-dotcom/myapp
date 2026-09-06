@@ -111,7 +111,9 @@ function formatMonthDay(isoDate) {
         </div>
 
         <div class="mt-4">
-            <label class="label-micro block text-[11px] text-ink-3" for="history-exercise">種目</label>
+            <label class="label-micro block text-[11px] text-ink-3" for="history-exercise"
+                >種目</label
+            >
             <select
                 id="history-exercise"
                 class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
@@ -120,7 +122,9 @@ function formatMonthDay(isoDate) {
             >
                 <option value="">種目を選択してください</option>
                 <option v-for="exercise in exercises" :key="exercise.id" :value="exercise.id">
-                    {{ exercise.name }}({{ muscleGroupLabels[exercise.muscle_group] ?? exercise.muscle_group }})
+                    {{ exercise.name }}({{
+                        muscleGroupLabels[exercise.muscle_group] ?? exercise.muscle_group
+                    }})
                 </option>
             </select>
         </div>
@@ -182,7 +186,10 @@ function formatMonthDay(isoDate) {
                     accent
                 />
                 <StatValue
-                    v-if="history.personalBest.metric === 'reps' && history.personalBest.max_weight > 0"
+                    v-if="
+                        history.personalBest.metric === 'reps' &&
+                        history.personalBest.max_weight > 0
+                    "
                     label="自己ベスト・加重"
                     :value="history.personalBest.max_weight"
                     unit="kg"
@@ -190,7 +197,10 @@ function formatMonthDay(isoDate) {
             </div>
             <div v-else class="mt-4 text-sm text-ink-2">
                 <p>この期間の記録がまだありません。</p>
-                <Link :href="route('workouts.create')" class="mt-2 inline-block text-accent underline underline-offset-2">
+                <Link
+                    :href="route('workouts.create')"
+                    class="mt-2 inline-block text-accent underline underline-offset-2"
+                >
                     まず記録する &rarr;
                 </Link>
             </div>
@@ -224,7 +234,10 @@ function formatMonthDay(isoDate) {
             </div>
             <div v-else class="mt-4 text-sm text-ink-2">
                 <p>体重を記録すると、体重比(相対筋力)が表示されます。</p>
-                <Link :href="route('body-logs.index')" class="mt-2 inline-block text-accent underline underline-offset-2">
+                <Link
+                    :href="route('body-logs.index')"
+                    class="mt-2 inline-block text-accent underline underline-offset-2"
+                >
                     体重を記録する &rarr;
                 </Link>
             </div>
@@ -244,7 +257,9 @@ function formatMonthDay(isoDate) {
 
             <div class="mt-4">
                 <p class="label-micro text-[10px] text-ink-3">全セット一覧</p>
-                <div v-if="history.sets.length === 0" class="mt-3 text-sm text-ink-2">記録がありません。</div>
+                <div v-if="history.sets.length === 0" class="mt-3 text-sm text-ink-2">
+                    記録がありません。
+                </div>
                 <div v-else class="mt-2 divide-y divide-line">
                     <div
                         v-for="set in history.sets"
@@ -252,11 +267,22 @@ function formatMonthDay(isoDate) {
                         class="flex items-center justify-between gap-3 py-2.5 text-sm"
                         :class="set.is_warmup ? 'opacity-50' : ''"
                     >
-                        <span class="label-micro w-20 shrink-0 text-[10px] text-ink-3 tabular-nums">{{ set.date }}</span>
-                        <span class="flex-1 text-right tabular-nums text-ink">{{ formatNumber(set.weight) }}<span class="text-ink-2">kg</span></span>
-                        <span class="flex-1 text-right tabular-nums text-ink">{{ set.reps }}<span class="text-ink-2">回</span></span>
-                        <span class="w-14 shrink-0 text-right tabular-nums text-ink-2">{{ set.rpe !== null ? formatNumber(set.rpe) : '—' }}</span>
-                        <span class="label-micro w-12 shrink-0 text-right text-[9px] text-ink-3">{{ set.is_warmup ? 'アップ' : '' }}</span>
+                        <span
+                            class="label-micro w-20 shrink-0 text-[10px] text-ink-3 tabular-nums"
+                            >{{ set.date }}</span
+                        >
+                        <span class="flex-1 text-right tabular-nums text-ink"
+                            >{{ formatNumber(set.weight) }}<span class="text-ink-2">kg</span></span
+                        >
+                        <span class="flex-1 text-right tabular-nums text-ink"
+                            >{{ set.reps }}<span class="text-ink-2">回</span></span
+                        >
+                        <span class="w-14 shrink-0 text-right tabular-nums text-ink-2">{{
+                            set.rpe !== null ? formatNumber(set.rpe) : '—'
+                        }}</span>
+                        <span class="label-micro w-12 shrink-0 text-right text-[9px] text-ink-3">{{
+                            set.is_warmup ? 'アップ' : ''
+                        }}</span>
                     </div>
                 </div>
             </div>

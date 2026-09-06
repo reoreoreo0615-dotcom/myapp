@@ -53,9 +53,7 @@ const closeModal = () => {
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
             <div class="p-6">
-                <h2 class="text-base font-medium text-ink">
-                    本当にアカウントを削除しますか?
-                </h2>
+                <h2 class="text-base font-medium text-ink">本当にアカウントを削除しますか?</h2>
 
                 <p class="mt-1 text-sm text-ink-2">
                     アカウントを削除すると、関連するすべてのリソースとデータが完全に削除されます。
@@ -63,11 +61,7 @@ const closeModal = () => {
                 </p>
 
                 <div class="mt-6">
-                    <InputLabel
-                        for="password"
-                        value="パスワード"
-                        class="sr-only"
-                    />
+                    <InputLabel for="password" value="パスワード" class="sr-only" />
 
                     <TextInput
                         id="password"
@@ -83,15 +77,9 @@ const closeModal = () => {
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeModal">
-                        キャンセル
-                    </SecondaryButton>
+                    <SecondaryButton @click="closeModal"> キャンセル </SecondaryButton>
 
-                    <DangerButton
-                        class="ms-3"
-                        :disabled="form.processing"
-                        @click="deleteUser"
-                    >
+                    <DangerButton class="ms-3" :disabled="form.processing" @click="deleteUser">
                         アカウントを削除
                     </DangerButton>
                 </div>

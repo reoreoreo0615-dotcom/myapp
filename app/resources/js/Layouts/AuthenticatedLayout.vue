@@ -65,10 +65,7 @@ const navItems = computed(() => {
         -->
         <header class="border-b border-line">
             <div class="flex items-center gap-4 px-4 py-3">
-                <Link
-                    :href="route('dashboard')"
-                    class="flex shrink-0 items-center gap-2"
-                >
+                <Link :href="route('dashboard')" class="flex shrink-0 items-center gap-2">
                     <ApplicationLogo class="h-6 w-6 fill-current text-accent" />
                     <span class="label-micro text-ink">Overload</span>
                 </Link>
@@ -92,9 +89,7 @@ const navItems = computed(() => {
                 </ul>
 
                 <div class="ml-auto flex shrink-0 items-center gap-3">
-                    <span class="label-micro max-w-24 truncate text-ink-3">{{
-                        userName
-                    }}</span>
+                    <span class="label-micro max-w-24 truncate text-ink-3">{{ userName }}</span>
                     <Link
                         :href="route('logout')"
                         method="post"
@@ -166,9 +161,7 @@ const navItems = computed(() => {
                                 />
                             </template>
                         </svg>
-                        <span class="label-micro text-[10px]">{{
-                            item.label
-                        }}</span>
+                        <span class="label-micro text-[10px]">{{ item.label }}</span>
                     </Link>
 
                     <span
@@ -193,9 +186,7 @@ const navItems = computed(() => {
                                 <path d="M12 7.5V12l3 2" />
                             </template>
                         </svg>
-                        <span class="label-micro text-[10px]">{{
-                            item.label
-                        }}</span>
+                        <span class="label-micro text-[10px]">{{ item.label }}</span>
                     </span>
                 </li>
             </ul>

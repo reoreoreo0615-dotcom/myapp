@@ -72,10 +72,7 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="パスワード(確認)"
-                />
+                <InputLabel for="password_confirmation" value="パスワード(確認)" />
 
                 <TextInput
                     id="password_confirmation"
@@ -86,19 +83,11 @@ const submit = () => {
                     autocomplete="new-password"
                 />
 
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
+                <InputError class="mt-2" :message="form.errors.password_confirmation" />
             </div>
 
             <div class="mt-6 flex flex-col gap-4">
-                <PrimaryButton
-                    class="w-full"
-                    :disabled="form.processing"
-                >
-                    登録する
-                </PrimaryButton>
+                <PrimaryButton class="w-full" :disabled="form.processing"> 登録する </PrimaryButton>
 
                 <Link
                     :href="route('login')"

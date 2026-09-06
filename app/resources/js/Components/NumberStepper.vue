@@ -40,9 +40,7 @@ const editInput = ref(null);
 
 const displayValue = computed(() => formatNumber(props.modelValue));
 
-const buttonSizeClass = computed(() =>
-    props.compact ? 'h-11 w-11' : 'h-12 w-12',
-);
+const buttonSizeClass = computed(() => (props.compact ? 'h-11 w-11' : 'h-12 w-12'));
 const numberSizeClass = computed(() =>
     props.compact ? 'min-w-12 text-xl' : 'min-w-[4.5rem] text-2xl',
 );
@@ -155,10 +153,7 @@ function commitEdit() {
             &minus;
         </button>
 
-        <div
-            :class="numberSizeClass"
-            class="flex shrink-0 items-center justify-center px-2"
-        >
+        <div :class="numberSizeClass" class="flex shrink-0 items-center justify-center px-2">
             <input
                 v-if="editing"
                 ref="editInput"

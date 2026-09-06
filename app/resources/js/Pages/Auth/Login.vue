@@ -72,19 +72,12 @@ const submit = () => {
             <div class="mt-4 block">
                 <label class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-ink-2"
-                        >ログイン状態を保持する</span
-                    >
+                    <span class="ms-2 text-sm text-ink-2">ログイン状態を保持する</span>
                 </label>
             </div>
 
             <div class="mt-6 flex flex-col gap-4">
-                <PrimaryButton
-                    class="w-full"
-                    :disabled="form.processing"
-                >
-                    ログイン
-                </PrimaryButton>
+                <PrimaryButton class="w-full" :disabled="form.processing"> ログイン </PrimaryButton>
 
                 <Link
                     v-if="canResetPassword"

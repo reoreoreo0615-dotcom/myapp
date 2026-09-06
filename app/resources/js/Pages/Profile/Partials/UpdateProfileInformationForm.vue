@@ -32,10 +32,7 @@ const form = useForm({
             </p>
         </header>
 
-        <form
-            @submit.prevent="form.patch(route('profile.update'))"
-            class="mt-6 space-y-6"
-        >
+        <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
             <div>
                 <InputLabel for="name" value="名前" />
 
@@ -97,12 +94,7 @@ const form = useForm({
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p
-                        v-if="form.recentlySuccessful"
-                        class="text-sm text-ink-2"
-                    >
-                        保存しました。
-                    </p>
+                    <p v-if="form.recentlySuccessful" class="text-sm text-ink-2">保存しました。</p>
                 </Transition>
             </div>
         </form>

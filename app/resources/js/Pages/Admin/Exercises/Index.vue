@@ -280,9 +280,7 @@ const deleteExercise = () => {
                     </option>
                 </select>
             </div>
-            <PrimaryButton class="shrink-0" @click="openCreateModal">
-                新規追加
-            </PrimaryButton>
+            <PrimaryButton class="shrink-0" @click="openCreateModal"> 新規追加 </PrimaryButton>
         </div>
 
         <p v-if="reorderDisabled" class="mb-4 text-xs text-ink-3">
@@ -319,9 +317,7 @@ const deleteExercise = () => {
                             class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
                             aria-label="下へ移動"
                             :disabled="
-                                index === group.items.length - 1 ||
-                                reordering ||
-                                reorderDisabled
+                                index === group.items.length - 1 || reordering || reorderDisabled
                             "
                             @click="move(group, index, 1)"
                         >
@@ -340,14 +336,23 @@ const deleteExercise = () => {
                             </span>
                         </p>
 
-                        <dl class="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-ink-2 sm:grid-cols-4">
+                        <dl
+                            class="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-ink-2 sm:grid-cols-4"
+                        >
                             <div>
                                 <dt class="label-micro text-[10px] text-ink-3">器具</dt>
-                                <dd>{{ equipmentLabels[exercise.equipment] ?? exercise.equipment }}</dd>
+                                <dd>
+                                    {{ equipmentLabels[exercise.equipment] ?? exercise.equipment }}
+                                </dd>
                             </div>
                             <div>
                                 <dt class="label-micro text-[10px] text-ink-3">種別</dt>
-                                <dd>{{ movementTypeLabels[exercise.movement_type] ?? exercise.movement_type }}</dd>
+                                <dd>
+                                    {{
+                                        movementTypeLabels[exercise.movement_type] ??
+                                        exercise.movement_type
+                                    }}
+                                </dd>
                             </div>
                             <div>
                                 <dt class="label-micro text-[10px] text-ink-3">刻み幅</dt>
@@ -531,21 +536,15 @@ const deleteExercise = () => {
         <!-- 削除確認モーダル -->
         <Modal :show="confirmingDeleteExercise !== null" @close="closeDeleteModal">
             <div class="p-6">
-                <h2 class="text-base font-medium text-ink">
-                    本当にこの種目を削除しますか?
-                </h2>
+                <h2 class="text-base font-medium text-ink">本当にこの種目を削除しますか?</h2>
 
                 <p class="mt-2 text-sm text-ink-2">
-                    <span class="font-medium text-ink">{{
-                        confirmingDeleteExercise?.name
-                    }}</span>
+                    <span class="font-medium text-ink">{{ confirmingDeleteExercise?.name }}</span>
                     を削除します。この操作は取り消せません。
                 </p>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeDeleteModal">
-                        キャンセル
-                    </SecondaryButton>
+                    <SecondaryButton @click="closeDeleteModal"> キャンセル </SecondaryButton>
                     <DangerButton :disabled="isDeleting" @click="deleteExercise">
                         削除する
                     </DangerButton>

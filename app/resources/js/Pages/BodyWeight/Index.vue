@@ -50,7 +50,11 @@ function selectPeriod(value) {
     if (value === props.period) {
         return;
     }
-    router.get(route('body-logs.index'), { period: value }, { preserveState: true, preserveScroll: true, replace: true });
+    router.get(
+        route('body-logs.index'),
+        { period: value },
+        { preserveState: true, preserveScroll: true, replace: true },
+    );
 }
 
 // ------------------------------------------------------------------
@@ -204,7 +208,9 @@ watch(
             </p>
 
             <div class="mt-3">
-                <label class="label-micro block text-[10px] text-ink-3" for="body-log-date">日付</label>
+                <label class="label-micro block text-[10px] text-ink-3" for="body-log-date"
+                    >日付</label
+                >
                 <input
                     id="body-log-date"
                     v-model="form.measured_on"
@@ -212,13 +218,24 @@ watch(
                     :max="todayString()"
                     class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
                 />
-                <p v-if="form.errors.measured_on" class="mt-1 text-xs text-warn">{{ form.errors.measured_on }}</p>
+                <p v-if="form.errors.measured_on" class="mt-1 text-xs text-warn">
+                    {{ form.errors.measured_on }}
+                </p>
             </div>
 
             <div class="mt-4">
                 <p class="label-micro text-[10px] text-ink-3">体重</p>
-                <NumberStepper v-model="form.weight_kg" class="mt-1.5" :step="0.1" :min="1" :max="999.9" unit="kg" />
-                <p v-if="form.errors.weight_kg" class="mt-1 text-xs text-warn">{{ form.errors.weight_kg }}</p>
+                <NumberStepper
+                    v-model="form.weight_kg"
+                    class="mt-1.5"
+                    :step="0.1"
+                    :min="1"
+                    :max="999.9"
+                    unit="kg"
+                />
+                <p v-if="form.errors.weight_kg" class="mt-1 text-xs text-warn">
+                    {{ form.errors.weight_kg }}
+                </p>
             </div>
 
             <div class="mt-4">
@@ -241,7 +258,9 @@ watch(
             </div>
 
             <div class="mt-4">
-                <label class="label-micro block text-[10px] text-ink-3" for="body-log-memo">メモ(任意)</label>
+                <label class="label-micro block text-[10px] text-ink-3" for="body-log-memo"
+                    >メモ(任意)</label
+                >
                 <input
                     id="body-log-memo"
                     v-model="form.memo"
@@ -293,20 +312,29 @@ watch(
         <!-- 一覧・編集・削除 -->
         <div class="mt-4">
             <p class="label-micro text-[10px] text-ink-3">記録一覧</p>
-            <div v-if="logs.length === 0" class="mt-3 text-sm text-ink-2">この期間の記録がありません。</div>
+            <div v-if="logs.length === 0" class="mt-3 text-sm text-ink-2">
+                この期間の記録がありません。
+            </div>
             <div v-else class="mt-2 divide-y divide-line">
                 <div v-for="log in logs" :key="log.id" class="py-3">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <span class="label-micro text-[10px] text-ink-3 tabular-nums">{{ log.measured_on }}</span>
+                            <span class="label-micro text-[10px] text-ink-3 tabular-nums">{{
+                                log.measured_on
+                            }}</span>
                             <p class="mt-1 tabular-nums text-ink">
                                 <span class="text-lg">{{ formatNumber(log.weight_kg) }}</span
                                 ><span class="text-ink-2">kg</span>
-                                <span v-if="log.body_fat_percentage !== null" class="ml-3 text-sm text-ink-2">
+                                <span
+                                    v-if="log.body_fat_percentage !== null"
+                                    class="ml-3 text-sm text-ink-2"
+                                >
                                     体脂肪 {{ formatNumber(log.body_fat_percentage) }}%
                                 </span>
                             </p>
-                            <p v-if="log.memo" class="mt-1 truncate text-xs text-ink-3">{{ log.memo }}</p>
+                            <p v-if="log.memo" class="mt-1 truncate text-xs text-ink-3">
+                                {{ log.memo }}
+                            </p>
                         </div>
                         <div class="flex shrink-0 gap-2">
                             <button

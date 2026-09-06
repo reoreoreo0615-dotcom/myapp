@@ -16,9 +16,7 @@ const submit = () => {
     form.post(route('verification.send'));
 };
 
-const verificationLinkSent = computed(
-    () => props.status === 'verification-link-sent',
-);
+const verificationLinkSent = computed(() => props.status === 'verification-link-sent');
 </script>
 
 <template>
@@ -31,10 +29,7 @@ const verificationLinkSent = computed(
             再度お送りします。
         </div>
 
-        <div
-            class="mb-4 text-sm font-medium text-ok"
-            v-if="verificationLinkSent"
-        >
+        <div class="mb-4 text-sm font-medium text-ok" v-if="verificationLinkSent">
             ご登録いただいたメールアドレスに、新しい確認用リンクを送信しました。
         </div>
 

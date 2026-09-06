@@ -142,7 +142,9 @@ const bodyWeightChangeLabel = computed(() => {
             <div v-if="summary.bodyWeight" class="flex items-end justify-between gap-4">
                 <div class="min-w-0">
                     <StatValue label="体重" :value="summary.bodyWeight.current" unit="kg" />
-                    <p class="label-micro mt-1.5 text-[10px] text-ink-2">{{ bodyWeightChangeLabel }}</p>
+                    <p class="label-micro mt-1.5 text-[10px] text-ink-2">
+                        {{ bodyWeightChangeLabel }}
+                    </p>
                 </div>
                 <Link
                     :href="route('body-logs.index')"
@@ -169,8 +171,16 @@ const bodyWeightChangeLabel = computed(() => {
 
         <div v-else class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8">
             <div class="min-w-0">
-                <StatValue label="今週の総挙上重量" :value="formatVolume(summary.weeklyVolume.thisWeek)" unit="kg" />
-                <p v-if="changeLabel" class="label-micro mt-1.5 text-[10px]" :class="changeColorClass">
+                <StatValue
+                    label="今週の総挙上重量"
+                    :value="formatVolume(summary.weeklyVolume.thisWeek)"
+                    unit="kg"
+                />
+                <p
+                    v-if="changeLabel"
+                    class="label-micro mt-1.5 text-[10px]"
+                    :class="changeColorClass"
+                >
                     {{ changeLabel }}
                 </p>
             </div>
@@ -192,15 +202,19 @@ const bodyWeightChangeLabel = computed(() => {
                 <p class="label-micro text-[11px] text-ink-3">直近の自己ベスト</p>
                 <p class="mt-1.5 truncate font-display text-3xl tabular-nums text-accent">
                     <template v-if="latestPersonalBest.isBodyweight">
-                        {{ latestPersonalBest.reps }}<span class="ml-1 text-base text-ink-2">回</span>
+                        {{ latestPersonalBest.reps
+                        }}<span class="ml-1 text-base text-ink-2">回</span>
                     </template>
                     <template v-else>
-                        {{ formatNumber(latestPersonalBest.weight) }}<span class="text-base text-ink-2">kg</span>
+                        {{ formatNumber(latestPersonalBest.weight)
+                        }}<span class="text-base text-ink-2">kg</span>
                         <span class="text-xl text-ink-2"> × </span>{{ latestPersonalBest.reps }}
                     </template>
                 </p>
                 <p class="label-micro mt-1 truncate text-[10px] text-ink-3">
-                    {{ latestPersonalBest.exerciseName }}・{{ formatMonthDay(latestPersonalBest.date) }}
+                    {{ latestPersonalBest.exerciseName }}・{{
+                        formatMonthDay(latestPersonalBest.date)
+                    }}
                 </p>
             </div>
         </div>
@@ -222,7 +236,9 @@ const bodyWeightChangeLabel = computed(() => {
                 :warn="summary.muscleBalance.isImbalanced"
             />
             <p v-if="summary.muscleBalance.isImbalanced" class="mt-2 text-xs text-warn">
-                {{ summary.muscleBalance.dominant === 'push' ? '押す種目' : '引く種目' }}に偏っているかもしれません。
+                {{
+                    summary.muscleBalance.dominant === 'push' ? '押す種目' : '引く種目'
+                }}に偏っているかもしれません。
             </p>
         </div>
 

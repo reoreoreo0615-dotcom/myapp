@@ -151,7 +151,15 @@ const showInputs = computed(() => !props.completed || props.editing);
                 :disabled="processing"
                 @click="editing ? emit('edit-save') : emit('record')"
             >
-                {{ processing ? (editing ? '保存中…' : '記録中…') : editing ? '保存' : 'このセットを記録' }}
+                {{
+                    processing
+                        ? editing
+                            ? '保存中…'
+                            : '記録中…'
+                        : editing
+                          ? '保存'
+                          : 'このセットを記録'
+                }}
             </button>
         </div>
     </div>

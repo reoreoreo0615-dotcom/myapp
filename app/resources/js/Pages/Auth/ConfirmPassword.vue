@@ -41,9 +41,7 @@ const submit = () => {
             </div>
 
             <div class="mt-6">
-                <PrimaryButton class="w-full" :disabled="form.processing">
-                    確認
-                </PrimaryButton>
+                <PrimaryButton class="w-full" :disabled="form.processing"> 確認 </PrimaryButton>
             </div>
         </form>
     </GuestLayout>

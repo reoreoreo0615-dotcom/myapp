@@ -35,9 +35,7 @@ const weightText = computed(() => formatNumber(props.weight));
     <div class="leading-none">
         <p class="label-micro text-[11px] text-ink-3">{{ label }}</p>
         <p class="mt-1.5 flex items-baseline gap-1 font-display text-3xl tabular-nums">
-            <span
-                :class="improvement === 'weight' ? 'text-accent' : 'text-ink'"
-            >
+            <span :class="improvement === 'weight' ? 'text-accent' : 'text-ink'">
                 {{ weightText }}{{ unit }}
             </span>
             <span class="text-xl text-ink-3">&times;</span>

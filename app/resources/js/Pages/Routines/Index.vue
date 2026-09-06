@@ -91,10 +91,7 @@ function undoDelete() {
         <div v-else class="divide-y divide-line">
             <div v-for="routine in routines" :key="routine.id" class="py-4 first:pt-4">
                 <div class="flex items-start justify-between gap-3">
-                    <Link
-                        :href="route('routines.edit', routine.id)"
-                        class="min-w-0 flex-1"
-                    >
+                    <Link :href="route('routines.edit', routine.id)" class="min-w-0 flex-1">
                         <p class="truncate font-medium text-ink">{{ routine.name }}</p>
                         <p v-if="routine.description" class="mt-1 truncate text-sm text-ink-2">
                             {{ routine.description }}
@@ -119,9 +116,7 @@ function undoDelete() {
 
         <Modal :show="confirmingDeleteRoutine !== null" @close="closeDeleteModal">
             <div class="p-6">
-                <h2 class="text-base font-medium text-ink">
-                    本当にこのメニューを削除しますか?
-                </h2>
+                <h2 class="text-base font-medium text-ink">本当にこのメニューを削除しますか?</h2>
 
                 <p class="mt-2 text-sm text-ink-2">
                     <span class="font-medium text-ink">{{ confirmingDeleteRoutine?.name }}</span>
@@ -131,9 +126,7 @@ function undoDelete() {
                 </p>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeDeleteModal">
-                        キャンセル
-                    </SecondaryButton>
+                    <SecondaryButton @click="closeDeleteModal"> キャンセル </SecondaryButton>
                     <DangerButton :disabled="isDeleting" @click="deleteRoutine">
                         削除する
                     </DangerButton>

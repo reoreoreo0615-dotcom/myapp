@@ -16,9 +16,7 @@ const props = defineProps({
 
 const page = usePage();
 const currentUserId = computed(() => page.props.auth.user.id);
-const adminCount = computed(
-    () => props.users.filter((user) => user.is_admin).length,
-);
+const adminCount = computed(() => props.users.filter((user) => user.is_admin).length);
 
 const confirmingDeleteUser = ref(null);
 const isDeleting = ref(false);
@@ -80,11 +78,7 @@ const formatDate = (value) => {
         </div>
 
         <div class="divide-y divide-line border-t border-line">
-            <div
-                v-for="user in users"
-                :key="user.id"
-                class="py-4 first:pt-0"
-            >
+            <div v-for="user in users" :key="user.id" class="py-4 first:pt-0">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
                         <p class="flex flex-wrap items-center gap-2 truncate font-medium text-ink">
@@ -134,21 +128,15 @@ const formatDate = (value) => {
                     >
                         {{ user.is_admin ? '管理者権限を剥奪' : '管理者にする' }}
                     </SecondaryButton>
-                    <DangerButton @click="confirmDelete(user)">
-                        削除
-                    </DangerButton>
+                    <DangerButton @click="confirmDelete(user)"> 削除 </DangerButton>
                 </div>
-                <p v-else class="mt-4 text-xs text-ink-3">
-                    自分自身の削除・権限変更はできません
-                </p>
+                <p v-else class="mt-4 text-xs text-ink-3">自分自身の削除・権限変更はできません</p>
             </div>
         </div>
 
         <Modal :show="confirmingDeleteUser !== null" @close="closeDeleteModal">
             <div class="p-6">
-                <h2 class="text-base font-medium text-ink">
-                    本当にこのユーザーを削除しますか?
-                </h2>
+                <h2 class="text-base font-medium text-ink">本当にこのユーザーを削除しますか?</h2>
 
                 <p class="mt-2 text-sm text-ink-2">
                     <span class="font-medium text-ink">{{ confirmingDeleteUser?.name }}</span>
@@ -158,9 +146,7 @@ const formatDate = (value) => {
                 </p>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeDeleteModal">
-                        キャンセル
-                    </SecondaryButton>
+                    <SecondaryButton @click="closeDeleteModal"> キャンセル </SecondaryButton>
                     <DangerButton :disabled="isDeleting" @click="deleteUser">
                         削除する
                     </DangerButton>

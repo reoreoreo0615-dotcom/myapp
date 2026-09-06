@@ -489,7 +489,9 @@ function finishWorkout() {
         </div>
 
         <FirstTimeTip v-if="!isFinished" storage-key="overload:guide:workout-record" class="mb-6">
-            目標の重量・回数は最初から入力されています。そのまま<strong class="text-ink">「記録」</strong>を押せば1セット完了です。長押しで数値をまとめて増減できます。
+            目標の重量・回数は最初から入力されています。そのまま<strong class="text-ink"
+                >「記録」</strong
+            >を押せば1セット完了です。長押しで数値をまとめて増減できます。
         </FirstTimeTip>
 
         <div v-if="visibleExercises.length === 0" class="py-8 text-center text-sm text-ink-2">
@@ -654,8 +656,12 @@ function finishWorkout() {
                 「元に戻す」から復元できますが、それ以降は復元できません。
             </p>
             <div class="mt-6 flex justify-end gap-3">
-                <SecondaryButton @click="confirmingDeleteWorkout = false">キャンセル</SecondaryButton>
-                <DangerButton :disabled="deletingWorkout" @click="deleteWorkout">削除する</DangerButton>
+                <SecondaryButton @click="confirmingDeleteWorkout = false"
+                    >キャンセル</SecondaryButton
+                >
+                <DangerButton :disabled="deletingWorkout" @click="deleteWorkout"
+                    >削除する</DangerButton
+                >
             </div>
         </div>
     </Modal>

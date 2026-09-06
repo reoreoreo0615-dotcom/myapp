@@ -102,15 +102,12 @@ const removingId = ref(null);
 
 const removeExercise = (routineExerciseId) => {
     removingId.value = routineExerciseId;
-    router.delete(
-        route('routines.exercises.destroy', [props.routine.id, routineExerciseId]),
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                removingId.value = null;
-            },
+    router.delete(route('routines.exercises.destroy', [props.routine.id, routineExerciseId]), {
+        preserveScroll: true,
+        onFinish: () => {
+            removingId.value = null;
         },
-    );
+    });
 };
 
 /* --- 種目の追加 --- */
@@ -229,20 +226,21 @@ const createCustomExercise = () => {
             </div>
 
             <ol v-else class="mt-3 divide-y divide-line">
-                <li
-                    v-for="(exercise, index) in exercises"
-                    :key="exercise.id"
-                    class="py-3"
-                >
+                <li v-for="(exercise, index) in exercises" :key="exercise.id" class="py-3">
                     <div class="flex items-center gap-3">
-                        <span class="w-5 shrink-0 text-center font-mono text-xs tabular-nums text-ink-3">
+                        <span
+                            class="w-5 shrink-0 text-center font-mono text-xs tabular-nums text-ink-3"
+                        >
                             {{ index + 1 }}
                         </span>
 
                         <div class="min-w-0 flex-1">
                             <p class="truncate font-medium text-ink">{{ exercise.name }}</p>
                             <p class="label-micro text-[10px] text-ink-3">
-                                {{ muscleGroupLabels[exercise.muscle_group] ?? exercise.muscle_group }}
+                                {{
+                                    muscleGroupLabels[exercise.muscle_group] ??
+                                    exercise.muscle_group
+                                }}
                             </p>
                         </div>
 
@@ -311,7 +309,8 @@ const createCustomExercise = () => {
                         :label="muscleGroupLabels[group] ?? group"
                     >
                         <option v-for="exercise in list" :key="exercise.id" :value="exercise.id">
-                            {{ exercise.name }}<template v-if="exercise.is_custom">(自分の種目)</template>
+                            {{ exercise.name
+                            }}<template v-if="exercise.is_custom">(自分の種目)</template>
                         </option>
                     </optgroup>
                 </select>

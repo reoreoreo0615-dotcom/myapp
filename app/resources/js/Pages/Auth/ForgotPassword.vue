@@ -30,10 +30,7 @@ const submit = () => {
             パスワード再設定用のリンクをメールでお送りします。
         </div>
 
-        <div
-            v-if="status"
-            class="mb-4 text-sm font-medium text-ok"
-        >
+        <div v-if="status" class="mb-4 text-sm font-medium text-ok">
             {{ status }}
         </div>
 

@@ -127,7 +127,8 @@ function tooltipFor(point) {
     if (props.label) {
         return `${point.date} ${props.label} ${formatNumber(point.value)}${props.unit}`;
     }
-    const base = props.metric === 'reps' ? `${point.reps}回` : `推定1RM ${formatNumber(point.value)}kg`;
+    const base =
+        props.metric === 'reps' ? `${point.reps}回` : `推定1RM ${formatNumber(point.value)}kg`;
     const weightNote = point.weight > 0 ? `(加重 ${formatNumber(point.weight)}kg)` : '';
     return `${point.date} ${base}${weightNote}`;
 }
@@ -221,7 +222,8 @@ const lastIndex = computed(() => props.points.length - 1);
                 fill="var(--color-accent)"
                 class="font-display tabular-nums"
             >
-                {{ formatNumber(points[lastIndex].value) }}{{ label ? unit : (metric === 'reps' ? '回' : 'kg') }}
+                {{ formatNumber(points[lastIndex].value)
+                }}{{ label ? unit : metric === 'reps' ? '回' : 'kg' }}
             </text>
 
             <!-- x axis -->

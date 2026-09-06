@@ -97,9 +97,7 @@ function undoDelete() {
             />
         </div>
 
-        <p class="text-sm text-ink-2">
-            メニューを選ぶと、そのメニューの種目が記録画面に並びます。
-        </p>
+        <p class="text-sm text-ink-2">メニューを選ぶと、そのメニューの種目が記録画面に並びます。</p>
 
         <Rule class="mt-6" />
 
