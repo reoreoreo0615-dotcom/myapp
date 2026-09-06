@@ -42,6 +42,13 @@ const deleteRoutine = () => {
         },
     });
 };
+
+function undoDelete() {
+    if (!page.props.flash?.undo) {
+        return;
+    }
+    router.patch(page.props.flash.undo, {}, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -54,9 +61,17 @@ const deleteRoutine = () => {
 
         <div
             v-if="page.props.flash?.success"
-            class="mb-4 border border-ok px-4 py-3 text-sm text-ok"
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 border border-ok px-4 py-3 text-sm text-ok"
         >
-            {{ page.props.flash.success }}
+            <span>{{ page.props.flash.success }}</span>
+            <button
+                v-if="page.props.flash?.undo"
+                type="button"
+                class="label-micro shrink-0 text-[10px] underline"
+                @click="undoDelete"
+            >
+                元に戻す
+            </button>
         </div>
 
         <Link
@@ -110,7 +125,8 @@ const deleteRoutine = () => {
 
                 <p class="mt-2 text-sm text-ink-2">
                     <span class="font-medium text-ink">{{ confirmingDeleteRoutine?.name }}</span>
-                    を削除します。この操作は取り消せません
+                    を削除します。削除した直後であれば「元に戻す」から復元できますが、
+                    それ以降は復元できません
                     (過去にこのメニューで記録したワークアウトの履歴自体は残ります)。
                 </p>
 

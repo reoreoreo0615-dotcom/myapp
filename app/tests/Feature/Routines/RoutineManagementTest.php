@@ -124,6 +124,14 @@ class RoutineManagementTest extends TestCase
         $this->assertSame('旧名', $routine->fresh()->name);
     }
 
+    /**
+     * Issue #23③: routines are now soft-deleted (so they can be restored
+     * immediately after via the flash "undo" link). A soft delete is a
+     * plain UPDATE, so it does not fire the physical nullOnDelete FK on
+     * workouts.routine_id — the workout keeps pointing at the (now
+     * trashed) routine, which is what lets an immediate restore put
+     * everything back exactly as it was with no extra bookkeeping.
+     */
     public function test_owner_can_delete_their_routine_and_past_workout_history_is_kept(): void
     {
         $user = User::factory()->create();
@@ -136,9 +144,37 @@ class RoutineManagementTest extends TestCase
         $response = $this->actingAs($user)->delete(route('routines.destroy', $routine));
 
         $response->assertRedirect(route('routines.index'));
-        $this->assertDatabaseMissing('routines', ['id' => $routine->id]);
-        // workouts.routine_id is nullOnDelete: the workout itself must survive.
-        $this->assertDatabaseHas('workouts', ['id' => $workout->id, 'routine_id' => null]);
+        $this->assertSoftDeleted('routines', ['id' => $routine->id]);
+        $this->assertDatabaseHas('workouts', ['id' => $workout->id, 'routine_id' => $routine->id]);
+    }
+
+    /**
+     * Issue #23③: the delete response carries an immediate "元に戻す" undo
+     * link, and hitting it restores the routine.
+     */
+    public function test_owner_can_restore_a_just_deleted_routine(): void
+    {
+        $user = User::factory()->create();
+        $routine = Routine::factory()->create(['user_id' => $user->id]);
+        $routine->delete();
+
+        $response = $this->actingAs($user)->patch(route('routines.restore', $routine));
+
+        $response->assertRedirect(route('routines.index'));
+        $this->assertDatabaseHas('routines', ['id' => $routine->id, 'deleted_at' => null]);
+    }
+
+    public function test_other_user_cannot_restore_the_routine(): void
+    {
+        $owner = User::factory()->create();
+        $intruder = User::factory()->create();
+        $routine = Routine::factory()->create(['user_id' => $owner->id]);
+        $routine->delete();
+
+        $response = $this->actingAs($intruder)->patch(route('routines.restore', $routine));
+
+        $response->assertForbidden();
+        $this->assertSoftDeleted('routines', ['id' => $routine->id]);
     }
 
     public function test_other_user_cannot_delete_the_routine(): void

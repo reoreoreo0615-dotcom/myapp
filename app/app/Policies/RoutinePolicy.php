@@ -24,4 +24,13 @@ class RoutinePolicy
     {
         return $user->id === $routine->user_id;
     }
+
+    /**
+     * Determine whether the user can restore a soft-deleted routine of theirs
+     * (Issue #23③).
+     */
+    public function restore(User $user, Routine $routine): bool
+    {
+        return $user->id === $routine->user_id;
+    }
 }

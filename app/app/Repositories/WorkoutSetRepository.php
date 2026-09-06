@@ -6,6 +6,7 @@ use App\Models\WorkoutSet;
 use App\Services\DashboardSummaryService;
 use App\Services\ExerciseHistoryService;
 use App\Services\ProgressionService;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,9 +14,34 @@ use Illuminate\Support\Facades\DB;
  *
  * {@see ProgressionService} は Eloquent に依存しない純粋なロジックのため、
  * 「前回のトップセット」に必要な生データの取得はこちらの責務とする。
+ *
+ * Issue #23③: workouts / workout_sets は SoftDeletes 対応した。Eloquent の
+ * クエリ(`WorkoutSet::query()` 等)は論理削除済みの行を自動で除外するが、
+ * このクラスの集計・履歴系メソッドはパフォーマンスのため `DB::table()` を
+ * 使っており、Eloquent と違って論理削除を自動で除外しない。
+ * そのため `workout_sets` と `workouts` を JOIN する生クエリは必ず
+ * {@see activeWorkoutSetsQuery()} 経由で組み立て、両テーブルの
+ * deleted_at IS NULL を条件に含める。
  */
 class WorkoutSetRepository
 {
+    /**
+     * `workout_sets` と `workouts` を JOIN した生クエリの共通の起点。
+     *
+     * 論理削除された workout_sets 自身、および論理削除された workouts に
+     * ぶら下がる workout_sets(cascadeOnDelete は物理FKのため、workouts を
+     * 論理削除しても配下の workout_sets 行自体は残る)の両方を除外する。
+     * これを経由せずに `DB::table('workout_sets')` を直接 join することは
+     * しないこと。
+     */
+    private function activeWorkoutSetsQuery(): Builder
+    {
+        return DB::table('workout_sets')
+            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+            ->whereNull('workout_sets.deleted_at')
+            ->whereNull('workouts.deleted_at');
+    }
+
     /**
      * 指定ユーザーが最後にその種目を行ったワークアウトの、
      * ウォームアップを除いたセット一覧を返す。
@@ -28,15 +54,27 @@ class WorkoutSetRepository
      * `workout_sets(exercise_id, workout_id)` の複合インデックスが
      * 両クエリの絞り込みに効くようにしている。
      *
+     * @param  string|null  $onOrBeforeDate  指定すると、この日付(performed_on)以前の
+     *                                       ワークアウトだけを対象にする(Issue #23②:
+     *                                       過去日のワークアウトの目標を、その日付より
+     *                                       後の記録から算出しないため)。null なら無制限。
+     * @param  int|null  $excludeWorkoutId  指定すると、この workout_id 自身は候補から除く。
      * @return array<int, array{weight: float, reps: int, is_warmup: bool}>
      */
-    public function lastWorkingSetsFor(int $userId, int $exerciseId): array
+    public function lastWorkingSetsFor(int $userId, int $exerciseId, ?string $onOrBeforeDate = null, ?int $excludeWorkoutId = null): array
     {
-        $lastWorkoutId = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $lastWorkoutId = $this->activeWorkoutSetsQuery()
             ->where('workout_sets.exercise_id', $exerciseId)
             ->where('workout_sets.is_warmup', false)
             ->where('workouts.user_id', $userId)
+            ->when(
+                $onOrBeforeDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '<=', $onOrBeforeDate),
+            )
+            ->when(
+                $excludeWorkoutId !== null,
+                fn ($query) => $query->where('workouts.id', '!=', $excludeWorkoutId),
+            )
             ->orderByDesc('workouts.performed_on')
             ->orderByDesc('workouts.id')
             ->limit(1)
@@ -79,9 +117,13 @@ class WorkoutSetRepository
      * 両クエリの絞り込みに効くようにしている。
      *
      * @param  array<int, int>  $exerciseIds
+     * @param  string|null  $onOrBeforeDate  {@see lastWorkingSetsFor()} と同じ意味
+     *                                       (Issue #23②: 過去日のワークアウトの目標を、
+     *                                       その日付より後の記録から算出しないため)。
+     * @param  int|null  $excludeWorkoutId  {@see lastWorkingSetsFor()} と同じ意味。
      * @return array<int, array<int, array{weight: float, reps: int, is_warmup: bool}>> exercise_id をキーにしたセット配列
      */
-    public function lastWorkingSetsForMany(int $userId, array $exerciseIds): array
+    public function lastWorkingSetsForMany(int $userId, array $exerciseIds, ?string $onOrBeforeDate = null, ?int $excludeWorkoutId = null): array
     {
         $exerciseIds = array_values(array_unique(array_map('intval', $exerciseIds)));
 
@@ -90,11 +132,18 @@ class WorkoutSetRepository
         }
 
         // クエリ1: 種目ごとの「最後のワークアウト」候補を DISTINCT (exercise_id, workout_id) で取得する。
-        $candidates = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $candidates = $this->activeWorkoutSetsQuery()
             ->whereIn('workout_sets.exercise_id', $exerciseIds)
             ->where('workout_sets.is_warmup', false)
             ->where('workouts.user_id', $userId)
+            ->when(
+                $onOrBeforeDate !== null,
+                fn ($query) => $query->where('workouts.performed_on', '<=', $onOrBeforeDate),
+            )
+            ->when(
+                $excludeWorkoutId !== null,
+                fn ($query) => $query->where('workouts.id', '!=', $excludeWorkoutId),
+            )
             ->select([
                 'workout_sets.exercise_id',
                 'workout_sets.workout_id',
@@ -178,8 +227,7 @@ class WorkoutSetRepository
      */
     public function historyTopSetsPerWorkout(int $userId, int $exerciseId, ?string $sinceDate): array
     {
-        $ranked = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $ranked = $this->activeWorkoutSetsQuery()
             ->where('workout_sets.exercise_id', $exerciseId)
             ->where('workout_sets.is_warmup', false)
             ->where('workouts.user_id', $userId)
@@ -223,8 +271,7 @@ class WorkoutSetRepository
      */
     public function historyAllSets(int $userId, int $exerciseId, ?string $sinceDate): array
     {
-        return DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        return $this->activeWorkoutSetsQuery()
             ->where('workout_sets.exercise_id', $exerciseId)
             ->where('workouts.user_id', $userId)
             ->when(
@@ -270,8 +317,7 @@ class WorkoutSetRepository
      */
     public function personalBest(int $userId, int $exerciseId): array
     {
-        $row = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $row = $this->activeWorkoutSetsQuery()
             ->where('workout_sets.exercise_id', $exerciseId)
             ->where('workout_sets.is_warmup', false)
             ->where('workouts.user_id', $userId)
@@ -305,8 +351,7 @@ class WorkoutSetRepository
      */
     public function hasAnyRecordedSets(int $userId): bool
     {
-        return DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        return $this->activeWorkoutSetsQuery()
             ->where('workouts.user_id', $userId)
             ->where('workout_sets.is_warmup', false)
             ->exists();
@@ -324,8 +369,7 @@ class WorkoutSetRepository
      */
     public function weeklyVolume(int $userId, string $thisWeekStart, string $lastWeekStart): array
     {
-        $row = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $row = $this->activeWorkoutSetsQuery()
             ->where('workouts.user_id', $userId)
             ->where('workout_sets.is_warmup', false)
             ->where('workouts.performed_on', '>=', $lastWeekStart)
@@ -358,8 +402,7 @@ class WorkoutSetRepository
      */
     public function trainedWeekStarts(int $userId): array
     {
-        return DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        return $this->activeWorkoutSetsQuery()
             ->where('workouts.user_id', $userId)
             ->where('workout_sets.is_warmup', false)
             ->distinct()
@@ -394,8 +437,7 @@ class WorkoutSetRepository
             .'ELSE ROUND(workout_sets.weight * (1 + workout_sets.reps / 30), 1) '
             .'END';
 
-        return DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        return $this->activeWorkoutSetsQuery()
             ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
             ->where('workouts.user_id', $userId)
             ->where('workout_sets.is_warmup', false)
@@ -429,8 +471,7 @@ class WorkoutSetRepository
     {
         $metricExpr = 'CASE WHEN exercises.is_bodyweight THEN workout_sets.reps ELSE workout_sets.weight END';
 
-        $perExerciseBest = DB::table('workout_sets')
-            ->join('workouts', 'workouts.id', '=', 'workout_sets.workout_id')
+        $perExerciseBest = $this->activeWorkoutSetsQuery()
             ->join('exercises', 'exercises.id', '=', 'workout_sets.exercise_id')
             ->where('workouts.user_id', $userId)
             ->where('workout_sets.is_warmup', false)

@@ -13,6 +13,20 @@ defineProps({
 
 const page = usePage();
 
+function todayString() {
+    // ローカルタイムゾーンでの「今日」。toISOString() は UTC になるため使わない。
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Issue #23②: ジムで入力し忘れた日を後から記録できるように、開始日を選べる
+// ようにする。既定は今日。未来日はこの max 属性とサーバー側バリデーションの
+// 両方で弾く。
+const performedOn = ref(todayString());
+
 // 二重送信防止(連打でワークアウトが2件作られないようにする)。
 const starting = ref(false);
 
@@ -24,7 +38,7 @@ const start = (routineId = null) => {
 
     router.post(
         route('workouts.store'),
-        { routine_id: routineId },
+        { routine_id: routineId, performed_on: performedOn.value },
         {
             onFinish: () => {
                 starting.value = false;
@@ -32,6 +46,13 @@ const start = (routineId = null) => {
         },
     );
 };
+
+function undoDelete() {
+    if (!page.props.flash?.undo) {
+        return;
+    }
+    router.patch(page.props.flash.undo, {}, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -43,10 +64,37 @@ const start = (routineId = null) => {
         </template>
 
         <div
+            v-if="page.props.flash?.success"
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 border border-ok px-4 py-3 text-sm text-ok"
+        >
+            <span>{{ page.props.flash.success }}</span>
+            <button
+                v-if="page.props.flash?.undo"
+                type="button"
+                class="label-micro shrink-0 text-[10px] underline"
+                @click="undoDelete"
+            >
+                元に戻す
+            </button>
+        </div>
+        <div
             v-if="page.props.flash?.info"
             class="mb-4 border border-line px-4 py-3 text-sm text-ink-2"
         >
             {{ page.props.flash.info }}
+        </div>
+
+        <div class="mb-6">
+            <label class="label-micro block text-[10px] text-ink-3" for="workout-performed-on">
+                トレーニングした日
+            </label>
+            <input
+                id="workout-performed-on"
+                v-model="performedOn"
+                type="date"
+                :max="todayString()"
+                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
+            />
         </div>
 
         <p class="text-sm text-ink-2">

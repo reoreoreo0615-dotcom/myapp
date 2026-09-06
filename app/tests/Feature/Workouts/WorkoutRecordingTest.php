@@ -384,6 +384,11 @@ class WorkoutRecordingTest extends TestCase
         ]);
     }
 
+    /**
+     * Issue #23③: deleting a set is now a soft delete (so it can be
+     * restored immediately after via the flash "undo" link), not a hard
+     * delete.
+     */
     public function test_owner_can_delete_a_recorded_set(): void
     {
         $user = User::factory()->create();
@@ -395,7 +400,26 @@ class WorkoutRecordingTest extends TestCase
 
         $this->actingAs($user)->delete(route('workouts.sets.destroy', [$workout, $set]))->assertRedirect();
 
-        $this->assertDatabaseMissing('workout_sets', ['id' => $set->id]);
+        $this->assertSoftDeleted('workout_sets', ['id' => $set->id]);
+    }
+
+    /**
+     * Issue #23③: hitting the "元に戻す" undo link restores the set.
+     */
+    public function test_owner_can_restore_a_just_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+        ]);
+        $set->delete();
+
+        $response = $this->actingAs($user)->patch(route('workouts.sets.restore', [$workout, $set]));
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('workout_sets', ['id' => $set->id, 'deleted_at' => null]);
     }
 
     public function test_user_cannot_edit_a_set_belonging_to_another_users_workout(): void

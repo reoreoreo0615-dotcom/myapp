@@ -46,9 +46,16 @@ class WorkoutProgressionSnapshotService
         $missingIds = array_values(array_diff(array_keys($exercises), array_keys($snapshot)));
 
         if ($missingIds !== []) {
+            // Issue #23②: 過去日のワークアウトは、その日付「より後」の記録から
+            // 目標を算出してはいけない。この workout 自身の performed_on 以前
+            // (同日の自分より前に作られたワークアウトは含む。id が自分より
+            // 若い = 必ずこの workout の作成より前に存在していたワークアウト
+            // であるため、通常の「今日」のケースの挙動は変えない)に限定する。
             $lastWorkingSets = $this->workoutSetRepository->lastWorkingSetsForMany(
                 $workout->user_id,
                 $missingIds,
+                $workout->performed_on->format('Y-m-d'),
+                $workout->id,
             );
 
             foreach ($missingIds as $exerciseId) {

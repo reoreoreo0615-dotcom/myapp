@@ -1,9 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Checkbox from '@/Components/Checkbox.vue';
+import DangerButton from '@/Components/DangerButton.vue';
 import FirstTimeTip from '@/Components/FirstTimeTip.vue';
 import IntervalTimer from '@/Components/IntervalTimer.vue';
+import Modal from '@/Components/Modal.vue';
 import Rule from '@/Components/Rule.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
 import SetRow from '@/Components/SetRow.vue';
 import TargetDisplay from '@/Components/TargetDisplay.vue';
 import { formatNumber } from '@/Utils/format';
@@ -19,6 +22,16 @@ const props = defineProps({
     },
     // 終了済み(finished_at 確定済み)のワークアウトは閲覧専用になる。
     isFinished: {
+        type: Boolean,
+        required: true,
+    },
+    // Issue #23①: 終了済みでも「記録を修正する」で入った明示的な編集モード中は true。
+    isEditing: {
+        type: Boolean,
+        required: true,
+    },
+    // セットの追加・編集・削除ができるか(未終了、または終了済み+編集モード中)。
+    canEditSets: {
         type: Boolean,
         required: true,
     },
@@ -229,12 +242,70 @@ function saveEdit(set) {
 }
 
 function deleteSet(set) {
-    if (!confirm('このセットを削除しますか?')) {
+    if (!confirm('このセットを削除しますか?直後であれば元に戻せます。')) {
         return;
     }
     router.delete(route('workouts.sets.destroy', [props.workout.id, set.id]), {
         preserveScroll: true,
         preserveState: true,
+    });
+}
+
+/* --- 誤削除からの復元(Issue #23③) ---
+ * バックエンドは削除の直後だけ flash.undo に復元用URLを積む。
+ * 「直後のみ」の担保は Inertia の flash がリクエスト単位で消えることに委ねる
+ * (専用のゴミ箱画面は用意しない)。
+ */
+function undoDelete() {
+    if (!page.props.flash?.undo) {
+        return;
+    }
+    router.patch(page.props.flash.undo, {}, { preserveScroll: true, preserveState: true });
+}
+
+/* --- 終了済みワークアウトの編集モード(Issue #23①) ---
+ * progression_snapshot は一切再計算しない。バックエンドも同様に
+ * editing_started_at の付け外しだけを行い、finished_at やスナップショットには触れない。
+ */
+const startingEdit = ref(false);
+const endingEdit = ref(false);
+
+function startEditing() {
+    if (startingEdit.value) {
+        return;
+    }
+    startingEdit.value = true;
+    router.patch(
+        route('workouts.start-editing', props.workout.id),
+        {},
+        { preserveScroll: true, onFinish: () => (startingEdit.value = false) },
+    );
+}
+
+function endEditing() {
+    if (endingEdit.value) {
+        return;
+    }
+    endingEdit.value = true;
+    router.patch(
+        route('workouts.end-editing', props.workout.id),
+        {},
+        { preserveScroll: true, onFinish: () => (endingEdit.value = false) },
+    );
+}
+
+/* --- ワークアウト自体の削除(Issue #23③) --- */
+
+const confirmingDeleteWorkout = ref(false);
+const deletingWorkout = ref(false);
+
+function deleteWorkout() {
+    deletingWorkout.value = true;
+    router.delete(route('workouts.destroy', props.workout.id), {
+        onFinish: () => {
+            deletingWorkout.value = false;
+            confirmingDeleteWorkout.value = false;
+        },
     });
 }
 
@@ -357,9 +428,17 @@ function finishWorkout() {
 
         <div
             v-if="page.props.flash?.success"
-            class="mb-4 border border-ok px-4 py-3 text-sm text-ok"
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 border border-ok px-4 py-3 text-sm text-ok"
         >
-            {{ page.props.flash.success }}
+            <span>{{ page.props.flash.success }}</span>
+            <button
+                v-if="page.props.flash?.undo"
+                type="button"
+                class="label-micro shrink-0 text-[10px] underline"
+                @click="undoDelete"
+            >
+                元に戻す
+            </button>
         </div>
         <div
             v-if="page.props.flash?.info"
@@ -369,11 +448,33 @@ function finishWorkout() {
         </div>
 
         <div
-            v-if="isFinished"
+            v-if="isEditing"
+            class="label-micro mb-6 flex flex-wrap items-center justify-between gap-3 border border-line px-4 py-3 text-ink-2"
+        >
+            <span class="font-medium text-accent">修正中(セットの追加・編集・削除ができます)</span>
+            <button
+                type="button"
+                class="text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="endingEdit"
+                @click="endEditing"
+            >
+                {{ endingEdit ? '処理中…' : '修正を終える' }}
+            </button>
+        </div>
+        <div
+            v-else-if="isFinished"
             class="label-micro mb-6 flex flex-wrap items-center justify-between gap-3 border border-line px-4 py-3 text-ink-2"
         >
             <span>終了済み・閲覧専用</span>
-            <span class="flex gap-4">
+            <span class="flex flex-wrap gap-4">
+                <button
+                    type="button"
+                    class="text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    :disabled="startingEdit"
+                    @click="startEditing"
+                >
+                    記録を修正する &rarr;
+                </button>
                 <Link :href="route('history.index')" class="text-accent">履歴を見る &rarr;</Link>
                 <Link :href="route('dashboard')" class="text-accent">ダッシュボード &rarr;</Link>
             </span>
@@ -422,7 +523,7 @@ function finishWorkout() {
                         :reps="editingSetId === set.id ? editDraft.reps : set.reps"
                         :weight-step="exercise.weight_increment"
                         completed
-                        :editable="!isFinished"
+                        :editable="canEditSets"
                         :warmup="set.is_warmup"
                         :editing="editingSetId === set.id"
                         :processing="editProcessing && editingSetId === set.id"
@@ -435,7 +536,7 @@ function finishWorkout() {
                     />
 
                     <SetRow
-                        v-if="!isFinished && draft[exercise.id]"
+                        v-if="canEditSets && draft[exercise.id]"
                         :set-number="nextSetNumber(exercise.id)"
                         :weight="draft[exercise.id].weight"
                         :reps="draft[exercise.id].reps"
@@ -452,7 +553,7 @@ function finishWorkout() {
                 </p>
 
                 <label
-                    v-if="!isFinished && draft[exercise.id]"
+                    v-if="canEditSets && draft[exercise.id]"
                     class="mt-2 flex h-11 items-center gap-2 text-sm text-ink-2"
                 >
                     <Checkbox v-model:checked="draft[exercise.id].isWarmup" />
@@ -513,6 +614,17 @@ function finishWorkout() {
             </button>
         </template>
 
+        <Rule class="mt-8" />
+        <div class="mt-4 flex justify-end">
+            <button
+                type="button"
+                class="label-micro flex h-11 items-center border border-line px-3 text-[10px] text-warn transition-colors hover:border-warn"
+                @click="confirmingDeleteWorkout = true"
+            >
+                このワークアウトを削除する
+            </button>
+        </div>
+
         <!-- 休憩タイマーの固定バーの分だけ、末尾コンテンツが隠れないよう空ける -->
         <div v-if="timerBarVisible" class="h-24" aria-hidden="true" />
     </AuthenticatedLayout>
@@ -523,4 +635,18 @@ function finishWorkout() {
         :workout-id="workout.id"
         @visible-change="timerBarVisible = $event"
     />
+
+    <Modal :show="confirmingDeleteWorkout" @close="confirmingDeleteWorkout = false">
+        <div class="p-6">
+            <h2 class="text-base font-medium text-ink">このワークアウトを削除しますか?</h2>
+            <p class="mt-2 text-sm text-ink-2">
+                {{ workout.performed_on }} のワークアウトを削除します。削除した直後であれば
+                「元に戻す」から復元できますが、それ以降は復元できません。
+            </p>
+            <div class="mt-6 flex justify-end gap-3">
+                <SecondaryButton @click="confirmingDeleteWorkout = false">キャンセル</SecondaryButton>
+                <DangerButton :disabled="deletingWorkout" @click="deleteWorkout">削除する</DangerButton>
+            </div>
+        </div>
+    </Modal>
 </template>

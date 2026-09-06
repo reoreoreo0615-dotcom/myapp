@@ -68,7 +68,7 @@ class WorkoutController extends Controller
         $workout = Workout::create([
             'user_id' => $request->user()->id,
             'routine_id' => $request->validated('routine_id'),
-            'performed_on' => now()->toDateString(),
+            'performed_on' => $request->validated('performed_on') ?? now()->toDateString(),
             'started_at' => now(),
         ]);
 
@@ -147,6 +147,13 @@ class WorkoutController extends Controller
                 ];
             });
 
+        // Issue #23①: 終了済みでも「修正する」で明示的な編集モードに入っていれば
+        // セットの追加・編集・削除を許可する({@see \App\Policies\WorkoutPolicy::update()}
+        // と同じ条件)。finished_at 自体・progression_snapshot はここでは変化しない。
+        $isFinished = $workout->finished_at !== null;
+        $isEditing = $workout->editing_started_at !== null;
+        $canEditSets = ! $isFinished || $isEditing;
+
         return Inertia::render('Workouts/Show', [
             'workout' => [
                 'id' => $workout->id,
@@ -155,9 +162,11 @@ class WorkoutController extends Controller
                 'finished_at' => optional($workout->finished_at)->toIso8601String(),
                 'routine_name' => $workout->routine->name ?? null,
             ],
-            // 終了済みのワークアウトは閲覧専用(セットの追加・編集・削除・種目追加は不可)。
-            'isFinished' => $workout->finished_at !== null,
-            'canAddExercises' => $workout->routine_id === null && $workout->finished_at === null,
+            // 終了済み・非編集モードのワークアウトは閲覧専用(セットの追加・編集・削除・種目追加は不可)。
+            'isFinished' => $isFinished,
+            'isEditing' => $isEditing,
+            'canEditSets' => $canEditSets,
+            'canAddExercises' => $workout->routine_id === null && $canEditSets,
             'exercises' => array_values($exercisesPayload),
             'progression' => $progression,
             'recordedSets' => $recordedSets,
@@ -175,6 +184,9 @@ class WorkoutController extends Controller
      *   PRs, and nothing for the progressive-overload nav to key off, so
      *   keeping it would only pollute history/aggregates (and issue #4's
      *   dashboard "training time" stat) with a zero-content session.
+     *   This is an automatic cleanup, not something the user asked to
+     *   delete, so it is force-deleted outright (Issue #23③'s "元に戻す"
+     *   undo affordance is for intentional user deletes, not this).
      */
     public function finish(Request $request, Workout $workout): RedirectResponse
     {
@@ -185,7 +197,7 @@ class WorkoutController extends Controller
         }
 
         if (! $workout->workoutSets()->exists()) {
-            $workout->delete();
+            $workout->forceDelete();
 
             return Redirect::route('workouts.create')
                 ->with('info', 'セットが記録されなかったため、このトレーニングは破棄しました。');
@@ -195,6 +207,67 @@ class WorkoutController extends Controller
 
         return Redirect::route('workouts.show', $workout)
             ->with('success', 'トレーニングを終了しました。お疲れ様でした。');
+    }
+
+    /**
+     * Enter the explicit "記録を修正する" edit mode on a finished workout
+     * (Issue #23①). Idempotent: re-entering while already editing does
+     * nothing to the recorded editing_started_at timestamp.
+     */
+    public function startEditing(Request $request, Workout $workout): RedirectResponse
+    {
+        $this->authorize('startEditing', $workout);
+
+        if ($workout->editing_started_at === null) {
+            $workout->update(['editing_started_at' => now()]);
+        }
+
+        return Redirect::route('workouts.show', $workout)
+            ->with('info', '修正モードにしました。セットの追加・編集・削除ができます。');
+    }
+
+    /**
+     * End the explicit edit mode ("修正を終える"), returning a finished
+     * workout to read-only. finished_at and progression_snapshot are left
+     * untouched.
+     */
+    public function endEditing(Request $request, Workout $workout): RedirectResponse
+    {
+        $this->authorize('endEditing', $workout);
+
+        $workout->update(['editing_started_at' => null]);
+
+        return Redirect::route('workouts.show', $workout)
+            ->with('success', '修正を終了しました。');
+    }
+
+    /**
+     * Soft-delete a workout the user intentionally wants gone (Issue #23③).
+     * Redirects to the picker screen (there is no workouts index) with an
+     * immediate "元に戻す" undo link in the flash data.
+     */
+    public function destroy(Workout $workout): RedirectResponse
+    {
+        $this->authorize('delete', $workout);
+
+        $workout->delete();
+
+        return Redirect::route('workouts.create')
+            ->with('success', 'ワークアウトを削除しました。')
+            ->with('undo', route('workouts.restore', $workout));
+    }
+
+    /**
+     * Restore a workout that was just soft-deleted ("元に戻す").
+     */
+    public function restore(Workout $workout): RedirectResponse
+    {
+        $this->authorize('restore', $workout);
+
+        $workout->restore();
+
+        return Redirect::route('workouts.show', $workout)
+            ->with('success', 'ワークアウトを元に戻しました。');
     }
 
     /**

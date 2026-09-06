@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateRoutineRequest;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\RoutineExercise;
+use App\Models\Workout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -115,8 +116,12 @@ class RoutineController extends Controller
     }
 
     /**
-     * Delete the routine (physical delete; past workouts keep their history
-     * because workouts.routine_id is nullOnDelete).
+     * Delete the routine (Issue #23③: soft delete, so it can be restored
+     * immediately after via the flash "undo" link). Past workouts keep
+     * their history and stay linked to routine_id as-is (a logical delete
+     * does not trigger the nullOnDelete physical FK), and
+     * {@see Workout::routine()} resolves it withTrashed() so
+     * they keep showing the routine's name/exercise composition.
      */
     public function destroy(Routine $routine): RedirectResponse
     {
@@ -124,6 +129,20 @@ class RoutineController extends Controller
 
         $routine->delete();
 
-        return Redirect::route('routines.index')->with('success', 'メニューを削除しました。');
+        return Redirect::route('routines.index')
+            ->with('success', 'メニューを削除しました。')
+            ->with('undo', route('routines.restore', $routine));
+    }
+
+    /**
+     * Restore a routine that was just soft-deleted ("元に戻す").
+     */
+    public function restore(Routine $routine): RedirectResponse
+    {
+        $this->authorize('restore', $routine);
+
+        $routine->restore();
+
+        return Redirect::route('routines.index')->with('success', 'メニューを元に戻しました。');
     }
 }

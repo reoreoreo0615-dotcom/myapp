@@ -30,6 +30,9 @@ class StoreWorkoutRequest extends FormRequest
                     fn ($query) => $query->where('user_id', $this->user()->id)
                 ),
             ],
+            // Issue #23②: ジムで入力し忘れた日を後から記録できるように、
+            // 開始日を選べるようにする。既定(未指定)は今日。未来日は不可。
+            'performed_on' => ['nullable', 'date', 'before_or_equal:today'],
         ];
     }
 }

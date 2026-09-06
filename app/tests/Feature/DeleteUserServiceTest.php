@@ -167,4 +167,33 @@ class DeleteUserServiceTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
+
+    /**
+     * Issue #23③: workouts/workout_sets/routines は SoftDeletes になったが、
+     * ユーザー削除は完全消去のままでなければならない。すでに(誤削除からの
+     * 復元用に)論理削除されていたレコードも、ユーザー削除時には
+     * 物理的に完全に消え、孤児として残らないことを確認する
+     * (withTrashed()->forceDelete() の再発防止テスト)。
+     */
+    public function test_deleting_a_user_purges_already_soft_deleted_workouts_and_routines(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id,
+            'exercise_id' => $exercise->id,
+        ]);
+        $workout->delete();
+
+        $routine = Routine::factory()->create(['user_id' => $user->id]);
+        $routine->delete();
+
+        $this->service->delete($user);
+
+        $this->assertDatabaseMissing('workouts', ['id' => $workout->id]);
+        $this->assertDatabaseMissing('workout_sets', ['id' => $set->id]);
+        $this->assertDatabaseMissing('routines', ['id' => $routine->id]);
+    }
 }

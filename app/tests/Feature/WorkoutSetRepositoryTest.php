@@ -448,4 +448,229 @@ class WorkoutSetRepositoryTest extends TestCase
         $this->assertSame(2, $queryCountForEight, '8種目でも2クエリのはず(N+1になっていないこと)。');
         $this->assertSame($queryCountForThree, $queryCountForEight, '種目数が増えてもクエリ数は変わらないこと。');
     }
+
+    // ------------------------------------------------------------------
+    // Issue #23③: 論理削除の除外
+    //
+    // このクラスの集計・履歴系メソッドは DB::table() を使っており、
+    // Eloquent と違って論理削除を自動で除外しない。activeWorkoutSetsQuery()
+    // 経由になっている全メソッドについて、(a) セット自身の論理削除、
+    // (b) 親ワークアウトの論理削除、の両方が正しく除外されることを確認する。
+    // ------------------------------------------------------------------
+
+    public function test_many_excludes_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-03']);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id]);
+
+        $this->assertArrayNotHasKey($exercise->id, $result);
+    }
+
+    public function test_many_excludes_sets_belonging_to_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-03']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+        $workout->delete();
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id]);
+
+        $this->assertArrayNotHasKey($exercise->id, $result);
+    }
+
+    public function test_last_working_sets_for_excludes_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->lastWorkingSetsFor($user->id, $exercise->id);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_last_working_sets_for_excludes_sets_of_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $workout->delete();
+
+        $result = $this->repository->lastWorkingSetsFor($user->id, $exercise->id);
+
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Issue #23②: 過去日のワークアウトの目標は、その日付「より後」の記録から
+     * 算出してはいけない。$onOrBeforeDate 以降(より新しい日付)の記録は
+     * 候補から除外されることを確認する。
+     */
+    public function test_many_excludes_workouts_after_the_given_cutoff_date(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $before = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        $beforeSet = WorkoutSet::factory()->create([
+            'workout_id' => $before->id, 'exercise_id' => $exercise->id,
+            'weight' => 55.0, 'reps' => 10, 'is_warmup' => false,
+        ]);
+
+        // カットオフより後(未来)の記録。過去日のワークアウトの目標算出には使われてはいけない。
+        $after = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-10']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $after->id, 'exercise_id' => $exercise->id,
+            'weight' => 999.0, 'reps' => 1, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id], '2026-09-05');
+
+        $this->assertSame((float) $beforeSet->weight, $result[$exercise->id][0]['weight']);
+    }
+
+    public function test_many_excludes_the_given_workout_id_itself(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-05']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 60.0, 'reps' => 8, 'is_warmup' => false,
+        ]);
+
+        $result = $this->repository->lastWorkingSetsForMany($user->id, [$exercise->id], '2026-09-05', $workout->id);
+
+        $this->assertArrayNotHasKey($exercise->id, $result);
+    }
+
+    public function test_personal_best_excludes_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 100.0, 'reps' => 5, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->personalBest($user->id, $exercise->id);
+
+        $this->assertNull($result['max_weight']);
+    }
+
+    public function test_personal_best_excludes_sets_of_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 100.0, 'reps' => 5, 'is_warmup' => false,
+        ]);
+        $workout->delete();
+
+        $result = $this->repository->personalBest($user->id, $exercise->id);
+
+        $this->assertNull($result['max_weight']);
+    }
+
+    public function test_has_any_recorded_sets_ignores_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $this->assertFalse($this->repository->hasAnyRecordedSets($user->id));
+    }
+
+    public function test_has_any_recorded_sets_ignores_sets_of_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $workout->delete();
+
+        $this->assertFalse($this->repository->hasAnyRecordedSets($user->id));
+    }
+
+    public function test_weekly_volume_ignores_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => now()->toDateString()]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+            'weight' => 100.0, 'reps' => 10, 'is_warmup' => false,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->weeklyVolume(
+            $user->id,
+            now()->startOfWeek()->toDateString(),
+            now()->startOfWeek()->subWeek()->toDateString(),
+        );
+
+        $this->assertSame(0.0, $result['this_week']);
+    }
+
+    public function test_history_all_sets_ignores_a_soft_deleted_set(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id]);
+        $set = WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id,
+        ]);
+        $set->delete();
+
+        $result = $this->repository->historyAllSets($user->id, $exercise->id, null);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_history_top_sets_per_workout_ignores_a_soft_deleted_workout(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->create(['user_id' => $user->id]);
+        $workout = Workout::factory()->create(['user_id' => $user->id, 'performed_on' => '2026-09-01']);
+        WorkoutSet::factory()->create([
+            'workout_id' => $workout->id, 'exercise_id' => $exercise->id, 'is_warmup' => false,
+        ]);
+        $workout->delete();
+
+        $result = $this->repository->historyTopSetsPerWorkout($user->id, $exercise->id, null);
+
+        $this->assertSame([], $result);
+    }
 }

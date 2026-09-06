@@ -89,7 +89,8 @@ class WorkoutSetController extends Controller
     }
 
     /**
-     * Delete a previously recorded set.
+     * Delete a previously recorded set (soft delete, Issue #23③). The flash
+     * "undo" link lets the front end offer an immediate "元に戻す".
      */
     public function destroy(Workout $workout, WorkoutSet $workoutSet): RedirectResponse
     {
@@ -98,7 +99,24 @@ class WorkoutSetController extends Controller
 
         $workoutSet->delete();
 
-        return Redirect::back();
+        return Redirect::back()
+            ->with('success', 'セットを削除しました。')
+            ->with('undo', route('workouts.sets.restore', [$workout, $workoutSet]));
+    }
+
+    /**
+     * Restore a set that was just soft-deleted ("元に戻す"). Gated by the
+     * same "update" ability as add/edit/delete (so it also requires the
+     * workout's explicit edit mode if it's already finished).
+     */
+    public function restore(Workout $workout, WorkoutSet $workoutSet): RedirectResponse
+    {
+        $this->authorize('update', $workout);
+        abort_unless($workoutSet->workout_id === $workout->id, 404);
+
+        $workoutSet->restore();
+
+        return Redirect::back()->with('success', 'セットを元に戻しました。');
     }
 
     private function isDuplicateEntry(QueryException $e): bool

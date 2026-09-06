@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('routines', RoutineController::class)->except(['show']);
+    Route::patch('/routines/{routine}/restore', [RoutineController::class, 'restore'])
+        ->name('routines.restore')
+        ->withTrashed();
 
     // /reorder は {routineExercise} の暗黙バインディングと衝突するため、
     // 動的パラメータを持つルートより先に定義する。
@@ -58,10 +61,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/workouts', [WorkoutController::class, 'store'])->name('workouts.store');
     Route::get('/workouts/{workout}', [WorkoutController::class, 'show'])->name('workouts.show');
     Route::patch('/workouts/{workout}/finish', [WorkoutController::class, 'finish'])->name('workouts.finish');
+    Route::patch('/workouts/{workout}/start-editing', [WorkoutController::class, 'startEditing'])->name('workouts.start-editing');
+    Route::patch('/workouts/{workout}/end-editing', [WorkoutController::class, 'endEditing'])->name('workouts.end-editing');
+    Route::delete('/workouts/{workout}', [WorkoutController::class, 'destroy'])->name('workouts.destroy');
+    Route::patch('/workouts/{workout}/restore', [WorkoutController::class, 'restore'])
+        ->name('workouts.restore')
+        ->withTrashed();
 
     Route::post('/workouts/{workout}/sets', [WorkoutSetController::class, 'store'])->name('workouts.sets.store');
     Route::patch('/workouts/{workout}/sets/{workoutSet}', [WorkoutSetController::class, 'update'])->name('workouts.sets.update');
     Route::delete('/workouts/{workout}/sets/{workoutSet}', [WorkoutSetController::class, 'destroy'])->name('workouts.sets.destroy');
+    // withTrashed() applies to both {workout} and {workoutSet} bindings on this route (Laravel has no
+    // per-parameter granularity for manually defined routes); the controller still requires
+    // authorize('update', $workout) + a matching workout_id, so this is not a security concern.
+    Route::patch('/workouts/{workout}/sets/{workoutSet}/restore', [WorkoutSetController::class, 'restore'])
+        ->name('workouts.sets.restore')
+        ->withTrashed();
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
