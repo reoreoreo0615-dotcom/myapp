@@ -79,6 +79,26 @@ docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:fres
 
 2026-09-05 に実際にこの事故が起き、実ユーザーと種目31件が消えた。
 
+**ただし `php artisan migrate`(前進のみ)は開発DB `myapp` に必ず適用すること。**
+これは非破壊で、既存データを消さない。適用を忘れると
+「テストは通るのに画面がエラーで開けない」状態になる。
+
+2026-09-06 に実際にこれが起きた。`body_logs` のマイグレーションを
+`myapp_testing` でしか適用せず、ダッシュボードが
+「Table 'myapp.body_logs' doesn't exist」で開けなくなった。
+
+```bash
+# 破壊的検証はテストDBで
+docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:fresh
+docker compose exec -T -e DB_DATABASE=myapp_testing php php artisan migrate:rollback
+
+# 開発DBには前進のみ適用する(必須)
+docker compose exec php php artisan migrate
+```
+
+**マイグレーションを作成したタスクの完了報告には、
+開発DB `myapp` への `migrate` 適用結果を必ず含めること。**
+
 ### 7. マルチユーザー前提
 
 全テーブルが `user_id` を持ちます。他ユーザーのデータに触れないよう Policy で制御し、
