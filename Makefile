@@ -1,4 +1,4 @@
-.PHONY: up down restart build php db logs ps artisan composer npm fresh migrate seed tinker clear lint lint-test
+.PHONY: up down restart build php db logs ps artisan composer npm fresh migrate seed tinker clear lint lint-test test-js lint-js lint-js-fix
 
 # コンテナ起動 / 停止
 up:
@@ -61,3 +61,15 @@ lint:
 # 整形が必要かチェックのみ(修正はしない。CIで使う)
 lint-test:
 	docker compose exec php ./vendor/bin/pint --test
+
+# JSテスト(Vitest)
+test-js:
+	docker compose exec php npm run test:js
+
+# JS/Vue の Lint(ESLint + Prettier のチェックのみ。修正はしない)
+lint-js:
+	docker compose exec php npm run lint:js
+
+# JS/Vue の Lint を自動修正
+lint-js-fix:
+	docker compose exec php npm run lint:js:fix

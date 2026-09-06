@@ -88,6 +88,12 @@ jobs:
         working-directory: app
         run: ./vendor/bin/pint --test
 
+      # JS/Vue の lint(ESLint + Prettier のチェックのみ)。
+      # PHP の Pint と同様、ビルドより前に置く(#5 / #25 の教訓)。
+      - name: Lint JS/Vue (ESLint + Prettier)
+        working-directory: app
+        run: npm run lint:js
+
       - name: Build frontend assets
         working-directory: app
         run: npm run build
@@ -97,3 +103,10 @@ jobs:
       - name: Run tests
         working-directory: app
         run: php artisan test
+
+      # JSテスト(Vitest)は Vue コンポーネントのみを対象とし Vite manifest には
+      # 依存しないが、PHP テストと同様に build より後に置き、CI 全体の順序を
+      # 「lint → build → test」で統一する。
+      - name: Run JS tests (Vitest)
+        working-directory: app
+        run: npm run test:js
