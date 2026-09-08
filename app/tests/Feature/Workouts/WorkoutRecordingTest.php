@@ -159,6 +159,55 @@ class WorkoutRecordingTest extends TestCase
         );
     }
 
+    /**
+     * Issue #27: 種目の progression_strategy を変えるだけで、呼び出し側の
+     * コードを一切変更せずに記録画面の「今日の目標」が切り替わることを
+     * Feature テストで確認する(ポリモーフィズムの受入条件)。
+     */
+    public function test_target_switches_with_the_exercises_progression_strategy(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::factory()->linearProgression()->create([
+            'user_id' => null,
+            'weight_increment' => 2.5,
+            'target_rep_min' => 8,
+            'target_rep_max' => 12,
+        ]);
+
+        $priorWorkout = Workout::factory()->create([
+            'user_id' => $user->id,
+            'performed_on' => '2026-09-01',
+        ]);
+        WorkoutSet::factory()->create([
+            'workout_id' => $priorWorkout->id,
+            'exercise_id' => $exercise->id,
+            'weight' => 60.0,
+            'reps' => 3,
+            'is_warmup' => false,
+        ]);
+
+        $workout = Workout::create([
+            'user_id' => $user->id,
+            'routine_id' => null,
+            'performed_on' => '2026-09-05',
+            'started_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('workouts.show', $workout));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page
+            ->component('Workouts/Show')
+            // ダブルプログレッションなら reps(3) < repMax(12) でレップアップに
+            // なるはずだが、リニアプログレッションなので reps に関わらず
+            // 重量が increment 分だけ上がり、reps は repMin(8) に固定される。
+            ->where('progression.'.$exercise->id.'.target.weight', 62.5)
+            ->where('progression.'.$exercise->id.'.target.reps', 8)
+            ->where('progression.'.$exercise->id.'.target.type', 'weight')
+            ->where('exercises.0.progression_strategy_label', 'リニアプログレッション')
+        );
+    }
+
     public function test_show_page_query_count_does_not_scale_with_number_of_exercises(): void
     {
         $user = User::factory()->create();

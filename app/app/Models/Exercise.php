@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Equipment;
 use App\Enums\MovementType;
 use App\Enums\MuscleGroup;
+use App\Enums\ProgressionStrategyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +30,7 @@ class Exercise extends Model
         'weight_increment',
         'target_rep_min',
         'target_rep_max',
+        'progression_strategy',
         'sort_order',
     ];
 
@@ -47,6 +49,7 @@ class Exercise extends Model
             'weight_increment' => 'decimal:2',
             'target_rep_min' => 'integer',
             'target_rep_max' => 'integer',
+            'progression_strategy' => ProgressionStrategyType::class,
             'sort_order' => 'integer',
         ];
     }

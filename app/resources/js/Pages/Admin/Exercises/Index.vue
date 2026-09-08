@@ -33,6 +33,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    progressionStrategies: {
+        type: Array,
+        required: true,
+    },
 });
 
 const page = usePage();
@@ -59,6 +63,12 @@ const movementTypeLabels = {
     pull: 'プル',
     legs: 'レッグ',
     core: 'コア',
+};
+
+const progressionStrategyLabels = {
+    double: 'ダブルプログレッション',
+    linear: 'リニアプログレッション',
+    five_by_five: '5×5',
 };
 
 /* --- フィルタ --- */
@@ -144,6 +154,7 @@ const blankFormData = () => ({
     weight_increment: 2.5,
     target_rep_min: 8,
     target_rep_max: 12,
+    progression_strategy: props.progressionStrategies[0] ?? 'double',
     sort_order: 0,
 });
 
@@ -167,6 +178,7 @@ const openEditModal = (exercise) => {
         weight_increment: exercise.weight_increment,
         target_rep_min: exercise.target_rep_min,
         target_rep_max: exercise.target_rep_max,
+        progression_strategy: exercise.progression_strategy,
         sort_order: exercise.sort_order,
     };
     form.defaults(data);
@@ -337,7 +349,7 @@ const deleteExercise = () => {
                         </p>
 
                         <dl
-                            class="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-ink-2 sm:grid-cols-4"
+                            class="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-sm text-ink-2 sm:grid-cols-5"
                         >
                             <div>
                                 <dt class="label-micro text-[10px] text-ink-3">器具</dt>
@@ -362,6 +374,15 @@ const deleteExercise = () => {
                                 <dt class="label-micro text-[10px] text-ink-3">目標レップ</dt>
                                 <dd class="tabular-nums">
                                     {{ exercise.target_rep_min }}–{{ exercise.target_rep_max }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="label-micro text-[10px] text-ink-3">漸進法</dt>
+                                <dd>
+                                    {{
+                                        progressionStrategyLabels[exercise.progression_strategy] ??
+                                        exercise.progression_strategy
+                                    }}
                                 </dd>
                             </div>
                         </dl>
@@ -520,6 +541,20 @@ const deleteExercise = () => {
                         />
                         <InputError class="mt-1" :message="form.errors.target_rep_max" />
                     </div>
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="progression_strategy" value="漸進法" />
+                    <select
+                        id="progression_strategy"
+                        v-model="form.progression_strategy"
+                        class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                    >
+                        <option v-for="ps in progressionStrategies" :key="ps" :value="ps">
+                            {{ progressionStrategyLabels[ps] ?? ps }}
+                        </option>
+                    </select>
+                    <InputError class="mt-1" :message="form.errors.progression_strategy" />
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">

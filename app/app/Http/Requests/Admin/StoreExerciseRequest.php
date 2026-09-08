@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use App\Enums\Equipment;
 use App\Enums\MovementType;
 use App\Enums\MuscleGroup;
+use App\Enums\ProgressionStrategyType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -41,6 +42,9 @@ class StoreExerciseRequest extends FormRequest
             'target_rep_min' => ['required', 'integer', 'min:1', 'max:999'],
             // target_rep_min <= target_rep_max を保証する(逆転を許さない)。
             'target_rep_max' => ['required', 'integer', 'min:1', 'max:999', 'gte:target_rep_min'],
+            // Issue #27: 未指定なら DB の既定値(ダブルプログレッション)を使う。
+            // 既存の振る舞いを変えないため必須にはしない。
+            'progression_strategy' => ['nullable', new Enum(ProgressionStrategyType::class)],
             'sort_order' => ['required', 'integer', 'min:0', 'max:32767'],
         ];
     }

@@ -158,6 +158,75 @@ class AdminExerciseManagementTest extends TestCase
     }
 
     // ------------------------------------------------------------------
+    // 漸進法(Issue #27)
+    // ------------------------------------------------------------------
+
+    public function test_creating_an_exercise_without_progression_strategy_defaults_to_double(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $this->actingAs($admin)->post('/admin/exercises', $this->validPayload());
+
+        $this->assertDatabaseHas('exercises', [
+            'name' => 'テストベンチプレス',
+            'progression_strategy' => 'double',
+        ]);
+    }
+
+    public function test_admin_can_create_an_exercise_with_linear_progression(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this->actingAs($admin)->post('/admin/exercises', $this->validPayload([
+            'progression_strategy' => 'linear',
+        ]));
+
+        $response->assertRedirect(route('admin.exercises.index'));
+        $this->assertDatabaseHas('exercises', [
+            'name' => 'テストベンチプレス',
+            'progression_strategy' => 'linear',
+        ]);
+    }
+
+    public function test_creating_an_exercise_rejects_an_invalid_progression_strategy(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $response = $this->actingAs($admin)->post('/admin/exercises', $this->validPayload([
+            'progression_strategy' => 'not-a-real-strategy',
+        ]));
+
+        $response->assertSessionHasErrors('progression_strategy');
+    }
+
+    public function test_admin_can_change_an_exercises_progression_strategy(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $exercise = Exercise::factory()->create(['user_id' => null]);
+
+        $response = $this->actingAs($admin)->patch(
+            "/admin/exercises/{$exercise->id}",
+            $this->validPayload(['name' => $exercise->name, 'progression_strategy' => 'five_by_five'])
+        );
+
+        $response->assertRedirect(route('admin.exercises.index'));
+        $this->assertSame('five_by_five', $exercise->fresh()->progression_strategy->value);
+    }
+
+    public function test_index_exposes_the_progression_strategy_of_each_exercise(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        Exercise::factory()->linearProgression()->create(['user_id' => null, 'name' => 'テスト種目']);
+
+        $response = $this->actingAs($admin)->get('/admin/exercises');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('exercises.0.progression_strategy', 'linear')
+            ->has('progressionStrategies')
+        );
+    }
+
+    // ------------------------------------------------------------------
     // 更新
     // ------------------------------------------------------------------
 

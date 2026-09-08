@@ -514,6 +514,12 @@ function finishWorkout() {
                         {{ muscleGroupLabels[exercise.muscle_group] ?? exercise.muscle_group }}
                     </span>
                 </div>
+                <p
+                    v-if="exercise.progression_strategy_label"
+                    class="label-micro mt-0.5 text-[10px] text-ink-3"
+                >
+                    {{ exercise.progression_strategy_label }}
+                </p>
                 <p v-if="progression[exercise.id]?.target" class="mt-1 text-sm text-ink-2">
                     {{ progressionMessage(exercise.id) }}
                 </p>

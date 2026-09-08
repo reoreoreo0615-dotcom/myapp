@@ -9,6 +9,7 @@ use App\Models\Workout;
 use App\Models\WorkoutSet;
 use App\Repositories\WorkoutSetRepository;
 use App\Services\PlateauAnalysisService;
+use App\Services\Progression\ProgressionStrategyFactory;
 use App\Services\WorkoutProgressionSnapshotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class WorkoutController extends Controller
         private readonly WorkoutProgressionSnapshotService $snapshotService,
         private readonly WorkoutSetRepository $workoutSetRepository,
         private readonly PlateauAnalysisService $plateauAnalysisService,
+        private readonly ProgressionStrategyFactory $strategyFactory,
     ) {}
 
     /**
@@ -122,6 +124,9 @@ class WorkoutController extends Controller
 
         $progression = $this->snapshotService->ensure($workout, $exerciseModels);
 
+        // Issue #27: 記録画面に現在の漸進法を小さく表示する。呼び出し側は
+        // Factory から得た ProgressionStrategy インターフェースの label() しか
+        // 使わず、どの実装クラスかは意識しない。
         $exercisesPayload = [];
         foreach ($exerciseModels as $exerciseId => $exercise) {
             $exercisesPayload[] = [
@@ -133,6 +138,7 @@ class WorkoutController extends Controller
                 'target_rep_min' => $exercise->target_rep_min,
                 'target_rep_max' => $exercise->target_rep_max,
                 'target_sets' => $targetSetsByExerciseId[$exerciseId] ?? null,
+                'progression_strategy_label' => $this->strategyFactory->for($exercise)->label(),
             ];
         }
 

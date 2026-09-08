@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Equipment;
 use App\Enums\MovementType;
 use App\Enums\MuscleGroup;
+use App\Enums\ProgressionStrategyType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReorderExercisesRequest;
 use App\Http\Requests\Admin\StoreExerciseRequest;
@@ -63,6 +64,7 @@ class AdminExerciseController extends Controller
             'muscleGroups' => array_column(MuscleGroup::cases(), 'value'),
             'movementTypes' => array_column(MovementType::cases(), 'value'),
             'equipmentOptions' => array_column(Equipment::cases(), 'value'),
+            'progressionStrategies' => array_column(ProgressionStrategyType::cases(), 'value'),
         ]);
     }
 
@@ -83,6 +85,7 @@ class AdminExerciseController extends Controller
             'weight_increment' => $data['weight_increment'],
             'target_rep_min' => $data['target_rep_min'],
             'target_rep_max' => $data['target_rep_max'],
+            'progression_strategy' => $data['progression_strategy'] ?? ProgressionStrategyType::Double->value,
             'sort_order' => $data['sort_order'],
         ]);
 
@@ -111,6 +114,9 @@ class AdminExerciseController extends Controller
             'weight_increment' => $data['weight_increment'],
             'target_rep_min' => $data['target_rep_min'],
             'target_rep_max' => $data['target_rep_max'],
+            // 未指定なら現在の設定を維持する。Double にフォールバックすると、
+            // リニアや5x5を選んでいた種目が黙ってダブルプログレッションに戻ってしまう。
+            'progression_strategy' => $data['progression_strategy'] ?? $exercise->progression_strategy->value,
             'sort_order' => $data['sort_order'],
         ]);
 
@@ -182,6 +188,7 @@ class AdminExerciseController extends Controller
             'weight_increment' => (float) $exercise->weight_increment,
             'target_rep_min' => $exercise->target_rep_min,
             'target_rep_max' => $exercise->target_rep_max,
+            'progression_strategy' => $exercise->progression_strategy->value,
             'sort_order' => $exercise->sort_order,
             'workout_sets_count' => $exercise->workout_sets_count,
         ];

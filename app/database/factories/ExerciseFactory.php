@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\Equipment;
 use App\Enums\MovementType;
 use App\Enums\MuscleGroup;
+use App\Enums\ProgressionStrategyType;
 use App\Models\Exercise;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -31,7 +32,28 @@ class ExerciseFactory extends Factory
             'weight_increment' => 2.50,
             'target_rep_min' => 8,
             'target_rep_max' => 12,
+            'progression_strategy' => ProgressionStrategyType::Double,
             'sort_order' => 0,
         ];
+    }
+
+    /**
+     * リニアプログレッションを使う種目。
+     */
+    public function linearProgression(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'progression_strategy' => ProgressionStrategyType::Linear,
+        ]);
+    }
+
+    /**
+     * 5×5 プログレッションを使う種目。
+     */
+    public function fiveByFive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'progression_strategy' => ProgressionStrategyType::FiveByFive,
+        ]);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Exercise;
 use App\Models\Workout;
 use App\Repositories\WorkoutSetRepository;
+use App\Services\Progression\ProgressionContext;
+use App\Services\Progression\ProgressionStrategyFactory;
 
 /**
  * ワークアウト開始時点(=まだ自分自身のセットが記録されていない時点)の
@@ -29,7 +31,7 @@ class WorkoutProgressionSnapshotService
 {
     public function __construct(
         private readonly WorkoutSetRepository $workoutSetRepository,
-        private readonly ProgressionService $progressionService,
+        private readonly ProgressionStrategyFactory $strategyFactory,
     ) {}
 
     /**
@@ -61,19 +63,24 @@ class WorkoutProgressionSnapshotService
             foreach ($missingIds as $exerciseId) {
                 $exercise = $exercises[$exerciseId];
                 $prevSets = $lastWorkingSets[$exerciseId] ?? [];
-                $topSet = $this->progressionService->pickTopSet($prevSets);
 
-                $target = $topSet === null ? null : $this->progressionService->nextTarget(
-                    $topSet['weight'],
-                    $topSet['reps'],
-                    (float) $exercise->weight_increment,
-                    $exercise->target_rep_min,
-                    $exercise->target_rep_max,
+                // Issue #27: どの漸進法(ダブルプログレッション/リニア/5×5)で
+                // 目標を計算するかは種目ごとに異なる。ここでは Factory から
+                // 得た ProgressionStrategy インターフェースだけを使い、
+                // 実装クラスの分岐はしない。
+                $strategy = $this->strategyFactory->for($exercise);
+                $context = new ProgressionContext(
+                    lastWorkingSets: $prevSets,
+                    weightIncrement: (float) $exercise->weight_increment,
+                    repMin: $exercise->target_rep_min,
+                    repMax: $exercise->target_rep_max,
                 );
+
+                $target = $strategy->nextTarget($context);
 
                 $snapshot[$exerciseId] = [
                     'prev' => $prevSets,
-                    'target' => $target,
+                    'target' => $target?->toArray(),
                 ];
             }
 
