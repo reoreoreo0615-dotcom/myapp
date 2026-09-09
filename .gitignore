@@ -27,3 +27,7 @@ app/bootstrap/cache/*.php
 *.swp
 .idea/
 .vscode/
+
+# MCP などの認証情報(絶対にコミットしない)
+.claude/secrets/*
+!.claude/secrets/README.md
