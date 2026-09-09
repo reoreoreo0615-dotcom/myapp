@@ -6,6 +6,7 @@ import FirstTimeTip from '@/Components/FirstTimeTip.vue';
 import IntervalTimer from '@/Components/IntervalTimer.vue';
 import Modal from '@/Components/Modal.vue';
 import PlateauNotice from '@/Components/PlateauNotice.vue';
+import RestNotifierStatus from '@/Components/RestNotifierStatus.vue';
 import Rule from '@/Components/Rule.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import SetRow from '@/Components/SetRow.vue';
@@ -501,6 +502,8 @@ function finishWorkout() {
                 >「記録」</strong
             >を押せば1セット完了です。長押しで数値をまとめて増減できます。
         </FirstTimeTip>
+
+        <RestNotifierStatus v-if="!isFinished" class="mb-6" />
 
         <div v-if="visibleExercises.length === 0" class="py-8 text-center text-sm text-ink-2">
             記録する種目がありません。下から種目を追加してください。

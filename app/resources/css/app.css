@@ -87,3 +87,35 @@
         touch-action: manipulation;
     }
 }
+
+/*
+ * 休憩タイマー完了時の画面フラッシュ(Issue #28: VisualNotifier)。
+ * 音・バイブが使えない環境でも必ず気づけるフォールバック。
+ * warn トークンを使う(意味を持つ色。装飾ではなく「要対応」の合図として
+ * 既存の目標超過表示と同じ色を踏襲する)。角丸・影・グラデーションは使わない。
+ */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: var(--color-warn);
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.rest-timer-flash::after {
+    animation: rest-timer-flash 320ms ease-out;
+}
+
+@keyframes rest-timer-flash {
+    0% {
+        opacity: 0;
+    }
+    30% {
+        opacity: 0.35;
+    }
+    100% {
+        opacity: 0;
+    }
+}
