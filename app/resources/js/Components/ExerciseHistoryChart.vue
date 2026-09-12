@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { formatNumber } from '@/Utils/format';
 
 const props = defineProps({
@@ -43,12 +43,82 @@ const PAD_BOTTOM = 28;
 const PLOT_HEIGHT = 180;
 const POINT_GAP = 56;
 const MIN_WIDTH = 280;
+// 親要素の幅が十分あるときに点と点の間を広げてよい上限。これがないと
+// 点数が少ないグラフを親幅いっぱいに引き伸ばした際に間延びして見える
+// (詳細は Issue #30 参照)。
+const MAX_POINT_GAP = 120;
 
+// 高さは常に固定。幅だけを親要素に合わせて可変にする(縦横比を保って
+// 拡大縮小するのではなく、SVG のピクセル単位そのものを実測幅で描き直す)。
+// これにより、幅が伸びても縦長になったり文字・点が歪んだりしない。
 const chartHeight = PAD_TOP + PLOT_HEIGHT + PAD_BOTTOM;
 
+// 点の配置に使う「自然な最小幅」。スマホ等、親要素がこれより狭い場合は
+// この値をそのまま描画幅として使い、親の overflow-x-auto で横スクロール
+// させる(従来の挙動を維持)。
 const chartWidth = computed(() => {
     const span = Math.max(props.points.length - 1, 0) * POINT_GAP;
     return Math.max(MIN_WIDTH, PAD_LEFT + PAD_RIGHT + span + 24);
+});
+
+// 親要素の幅がどれだけ大きくても、これ以上には広げない上限。
+const maxChartWidth = computed(() => {
+    const span = Math.max(props.points.length - 1, 0) * MAX_POINT_GAP;
+    return Math.max(MIN_WIDTH, PAD_LEFT + PAD_RIGHT + span + 24);
+});
+
+// 実測した親要素(.overflow-x-auto の div)の幅。ResizeObserver 未対応環境や
+// マウント前は 0 のままとし、その場合は chartWidth(自然な最小幅)にフォールバックする。
+const containerRef = ref(null);
+const containerWidth = ref(0);
+const resizeObserver =
+    typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(([entry]) => {
+              if (entry) {
+                  containerWidth.value = entry.contentRect.width;
+              }
+          });
+
+// v-if で表示・非表示が切り替わる要素なので、ref の付け外しを watch で
+// 検知して observe/unobserve する(onMounted 一回だけだと、記録が0件→
+// 複数件に変わって要素が後から現れたケースを取りこぼす)。
+watch(
+    containerRef,
+    (el, prevEl) => {
+        if (!resizeObserver) {
+            return;
+        }
+        if (prevEl) {
+            resizeObserver.unobserve(prevEl);
+        }
+        if (el) {
+            containerWidth.value = el.clientWidth;
+            resizeObserver.observe(el);
+        } else {
+            containerWidth.value = 0;
+        }
+    },
+    { immediate: true },
+);
+
+onBeforeUnmount(() => {
+    resizeObserver?.disconnect();
+});
+
+// 実際に描画する幅。「自然な最小幅」と「上限」の間で、親要素の幅に合わせる。
+// スクロールのヒントは「実際にはみ出すとき」だけ出す。
+// 点数だけで判定すると、デスクトップでグラフが収まっているのに
+// 「横にスクロールできます」と出てしまう。
+const isScrollable = computed(
+    () => containerWidth.value > 0 && renderWidth.value > containerWidth.value + 1,
+);
+
+const renderWidth = computed(() => {
+    if (containerWidth.value <= 0) {
+        return chartWidth.value;
+    }
+    return Math.min(Math.max(containerWidth.value, chartWidth.value), maxChartWidth.value);
 });
 
 const domain = computed(() => {
@@ -83,7 +153,13 @@ const domain = computed(() => {
 });
 
 function xAt(index) {
-    return PAD_LEFT + index * POINT_GAP;
+    const n = props.points.length;
+    if (n <= 1) {
+        return PAD_LEFT;
+    }
+    const span = renderWidth.value - PAD_LEFT - PAD_RIGHT - 24;
+    const gap = span / (n - 1);
+    return PAD_LEFT + index * gap;
 }
 
 function yAt(value) {
@@ -141,13 +217,13 @@ const lastIndex = computed(() => props.points.length - 1);
         この期間の記録がありません。
     </div>
 
-    <div v-else class="overflow-x-auto">
-        <p v-if="points.length > 6" class="label-micro mb-1 text-[10px] text-ink-3">
+    <div v-else ref="containerRef" class="overflow-x-auto">
+        <p v-if="isScrollable" class="label-micro mb-1 text-[10px] text-ink-3">
             ← 横にスクロールできます →
         </p>
         <svg
-            :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
-            :width="chartWidth"
+            :viewBox="`0 0 ${renderWidth} ${chartHeight}`"
+            :width="renderWidth"
             :height="chartHeight"
             role="img"
             :aria-label="`${label ?? (metric === 'reps' ? 'レップ数' : '推定1RM')}の推移グラフ`"
@@ -157,7 +233,7 @@ const lastIndex = computed(() => props.points.length - 1);
                 <line
                     :x1="PAD_LEFT"
                     :y1="line.y"
-                    :x2="chartWidth - PAD_RIGHT"
+                    :x2="renderWidth - PAD_RIGHT"
                     :y2="line.y"
                     stroke="var(--color-line)"
                     stroke-width="1"
@@ -230,7 +306,7 @@ const lastIndex = computed(() => props.points.length - 1);
             <line
                 :x1="PAD_LEFT"
                 :y1="PAD_TOP + PLOT_HEIGHT"
-                :x2="chartWidth - PAD_RIGHT"
+                :x2="renderWidth - PAD_RIGHT"
                 :y2="PAD_TOP + PLOT_HEIGHT"
                 stroke="var(--color-ink-3)"
                 stroke-width="1"

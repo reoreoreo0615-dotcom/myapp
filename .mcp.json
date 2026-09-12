@@ -4,7 +4,7 @@
       "command": "npx",
       "args": ["-y", "mcp-gsheets@latest"],
       "env": {
-        "GOOGLE_PROJECT_ID": "PUT_YOUR_PROJECT_ID_HERE",
+        "GOOGLE_PROJECT_ID": "eminent-century-508407-v7",
         "GOOGLE_APPLICATION_CREDENTIALS": "/Applications/MAMP/htdocs/laravel/myapp/.claude/secrets/gcp-service-account.json"
       }
     }
