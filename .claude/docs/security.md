@@ -571,8 +571,8 @@ Inertia で全ページに共有される `auth.user`(`app/app/Http/Middleware/H
      (`app/app/Http/Requests/Auth/LoginRequest.php:59-75`)。
    - パスワードリセットメール送信・メール確認再送は `throttle:6,1`(1分に6回)が付いている
      (`routes/auth.php:43,47`)。
-   - **一方、新規登録(`POST /register`)には一切レート制限が無い**
-     (`routes/auth.php:18`)。大量アカウント作成・メール送信の踏み台にされ得る。
+   - 新規登録(`POST /register`)は当初レート制限が無かったが、調査後に
+     `throttle:6,1` を追加した(`routes/auth.php:20-21`)。
    - ワークアウト記録・種目作成などアプリ本体の POST/PATCH/DELETE エンドポイントにも
      `throttle` ミドルウェアは付いていない(認証必須なので野放しの匿名連打ではないが、
      ログイン済みユーザーによる連続リクエストを制限する仕組みは無い)。
