@@ -17,20 +17,10 @@ use App\Services\ProgressionService;
  * ProgressionService 自体には一切手を加えていない
  * (既存の35件のユニットテストが無変更で通ることの根拠)。
  */
-final class DoubleProgressionStrategy implements ProgressionStrategy
+final class DoubleProgressionStrategy extends AbstractProgressionStrategy
 {
-    public function __construct(
-        private readonly ProgressionService $progressionService,
-    ) {}
-
-    public function nextTarget(ProgressionContext $context): ?ProgressionTarget
+    protected function calculate(array $topSet, ProgressionContext $context): ?ProgressionTarget
     {
-        $topSet = $this->progressionService->pickTopSet($context->lastWorkingSets);
-
-        if ($topSet === null) {
-            return null;
-        }
-
         $result = $this->progressionService->nextTarget(
             $topSet['weight'],
             $topSet['reps'],

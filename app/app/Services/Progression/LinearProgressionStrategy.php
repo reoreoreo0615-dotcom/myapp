@@ -2,8 +2,6 @@
 
 namespace App\Services\Progression;
 
-use App\Services\ProgressionService;
-
 /**
  * リニアプログレッション。
  *
@@ -14,22 +12,12 @@ use App\Services\ProgressionService;
  * ダブルプログレッションと違い「レップアップ」フェーズが存在しないため、
  * type は常に 'weight'。
  */
-final class LinearProgressionStrategy implements ProgressionStrategy
+final class LinearProgressionStrategy extends AbstractProgressionStrategy
 {
-    public function __construct(
-        private readonly ProgressionService $progressionService,
-    ) {}
-
-    public function nextTarget(ProgressionContext $context): ?ProgressionTarget
+    protected function calculate(array $topSet, ProgressionContext $context): ?ProgressionTarget
     {
-        $topSet = $this->progressionService->pickTopSet($context->lastWorkingSets);
-
-        if ($topSet === null) {
-            return null;
-        }
-
         return new ProgressionTarget(
-            weight: round($topSet['weight'] + $context->weightIncrement, 2),
+            weight: $this->roundWeight($topSet['weight'] + $context->weightIncrement),
             reps: $context->repMin,
             type: 'weight',
         );

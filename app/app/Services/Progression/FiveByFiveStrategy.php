@@ -2,8 +2,6 @@
 
 namespace App\Services\Progression;
 
-use App\Services\ProgressionService;
-
 /**
  * 5×5 プログレッション。
  *
@@ -29,23 +27,13 @@ use App\Services\ProgressionService;
  *   ダブルプログレッションの「レップアップ」とは異なり目標レップ数自体は
  *   変わらないが、「重量は上がっていない」という表示上の意味は同じ)。
  */
-final class FiveByFiveStrategy implements ProgressionStrategy
+final class FiveByFiveStrategy extends AbstractProgressionStrategy
 {
     private const REQUIRED_SETS = 5;
 
-    public function __construct(
-        private readonly ProgressionService $progressionService,
-    ) {}
-
-    public function nextTarget(ProgressionContext $context): ?ProgressionTarget
+    protected function calculate(array $topSet, ProgressionContext $context): ?ProgressionTarget
     {
-        $topSet = $this->progressionService->pickTopSet($context->lastWorkingSets);
-
-        if ($topSet === null) {
-            return null;
-        }
-
-        $topWeight = round((float) $topSet['weight'], 2);
+        $topWeight = $this->roundWeight((float) $topSet['weight']);
         $achievedSets = 0;
 
         foreach ($context->lastWorkingSets as $set) {
@@ -53,7 +41,7 @@ final class FiveByFiveStrategy implements ProgressionStrategy
                 continue;
             }
 
-            if (round((float) $set['weight'], 2) !== $topWeight) {
+            if ($this->roundWeight((float) $set['weight']) !== $topWeight) {
                 continue;
             }
 
@@ -64,7 +52,7 @@ final class FiveByFiveStrategy implements ProgressionStrategy
 
         if ($achievedSets >= self::REQUIRED_SETS) {
             return new ProgressionTarget(
-                weight: round($topWeight + $context->weightIncrement, 2),
+                weight: $this->roundWeight($topWeight + $context->weightIncrement),
                 reps: $context->repMax,
                 type: 'weight',
             );
