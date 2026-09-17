@@ -247,6 +247,27 @@ footer a{color:var(--accent)}
   .phones figure{scroll-snap-align:start}
   .lane{grid-template-columns:1fr;gap:8px}
 }
+/* ---------- print(PDF 出力用) ---------- */
+@page{size:A4;margin:12mm}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-size:12.5px}
+  .tocbar,.scrollhint{display:none}
+  .masthead .wrap{padding-block:8px 20px}
+  main .wrap{padding-block:24px 0;gap:36px}
+  .figbox svg{min-width:0}
+  .scroll{overflow:visible}
+  .ladder{min-width:0}
+  .phones{grid-template-columns:repeat(3,1fr);overflow:visible}
+  main .wrap,section,.sub{display:block}
+  section + section{margin-top:36px}
+  section > * + *{margin-top:16px}
+  .sub > * + *{margin-top:10px}
+  h2,h3,.head{break-after:avoid;break-inside:avoid}
+  #screens > figure img{max-height:110mm;width:auto;max-width:100%;margin-inline:auto}
+  .figbox,.compare,.promise,.rule,.agent,.lane,figure,.scope,.methods,.status{break-inside:avoid}
+  footer{margin-top:24px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
