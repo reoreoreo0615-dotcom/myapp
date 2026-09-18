@@ -134,7 +134,7 @@ function commitEdit() {
 
 <template>
     <div
-        class="inline-flex items-stretch divide-x divide-line border border-line"
+        class="inline-flex items-stretch divide-x divide-line overflow-hidden rounded-[--radius-control] border border-line"
         role="group"
         :aria-label="unit ? `${unit} を調整` : '数値を調整'"
     >

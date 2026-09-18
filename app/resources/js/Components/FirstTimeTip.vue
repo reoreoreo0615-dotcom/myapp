@@ -41,7 +41,7 @@ function dismiss() {
 <template>
     <div
         v-if="!dismissed"
-        class="flex items-start justify-between gap-3 border border-line bg-surface px-4 py-3 text-sm text-ink-2"
+        class="flex items-start justify-between gap-3 rounded-[--radius-card] bg-surface px-4 py-3 text-sm text-ink-2"
     >
         <div class="min-w-0 flex-1"><slot /></div>
         <button

@@ -67,7 +67,7 @@ const content = computed(() => {
 
             <Link
                 :href="route('dashboard')"
-                class="mt-10 flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
+                class="rounded-full mt-10 flex h-11 w-full items-center justify-center gap-2 bg-accent px-6 text-sm font-medium text-white transition-opacity hover:opacity-85"
             >
                 ダッシュボードへ戻る
             </Link>

@@ -84,7 +84,7 @@ function formatMonthDay(isoDate) {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">履歴</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">履歴</h2>
         </template>
 
         <!--
@@ -92,9 +92,9 @@ function formatMonthDay(isoDate) {
             375px 幅で窮屈になるため追加せず、関連性の高いこの履歴画面に
             「タブ」として置く(体重画面側にも同じタブを置いて行き来できる)。
         -->
-        <div class="flex border-b border-line" role="tablist">
+        <div class="flex gap-1 rounded-full bg-surface p-1" role="tablist">
             <span
-                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-accent text-center text-accent"
+                class="flex h-9 flex-1 items-center justify-center rounded-full bg-card text-center text-sm font-medium text-ink shadow-sm"
                 role="tab"
                 aria-selected="true"
             >
@@ -102,7 +102,7 @@ function formatMonthDay(isoDate) {
             </span>
             <Link
                 :href="route('body-logs.index')"
-                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-transparent text-center text-ink-2 transition-colors hover:text-ink"
+                class="flex h-9 flex-1 items-center justify-center rounded-full text-center text-sm font-medium text-ink-2 transition-colors hover:text-ink"
                 role="tab"
                 aria-selected="false"
             >
@@ -116,7 +116,7 @@ function formatMonthDay(isoDate) {
             >
             <select
                 id="history-exercise"
-                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink sm:max-w-md"
+                class="mt-1.5 h-11 w-full rounded-[--radius-control] border border-line bg-surface px-3 text-sm text-ink sm:max-w-md"
                 :value="selectedExerciseId ?? ''"
                 @change="onExerciseChange"
             >
@@ -129,16 +129,16 @@ function formatMonthDay(isoDate) {
             </select>
         </div>
 
-        <div v-if="selectedExerciseId" class="mt-4 flex gap-2">
+        <div v-if="selectedExerciseId" class="mt-4 flex gap-1 rounded-full bg-surface p-1">
             <button
                 v-for="option in periodOptions"
                 :key="option.value"
                 type="button"
-                class="label-micro h-10 flex-1 border text-[11px] transition-colors"
+                class="h-9 flex-1 rounded-full text-sm font-medium transition-colors"
                 :class="
                     option.value === period
-                        ? 'border-accent text-accent'
-                        : 'border-line text-ink-2 hover:border-ink-3'
+                        ? 'bg-card text-ink shadow-sm'
+                        : 'text-ink-2 hover:text-ink'
                 "
                 @click="selectPeriod(option.value)"
             >

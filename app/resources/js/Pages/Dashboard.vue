@@ -2,7 +2,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PlateauNotice from '@/Components/PlateauNotice.vue';
 import RatioBar from '@/Components/RatioBar.vue';
-import Rule from '@/Components/Rule.vue';
 import StatValue from '@/Components/StatValue.vue';
 import { formatNumber } from '@/Utils/format';
 import { Head, Link } from '@inertiajs/vue3';
@@ -117,20 +116,18 @@ const bodyWeightChangeLabel = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">ダッシュボード</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">ダッシュボード</h2>
         </template>
 
         <div>
             <p class="label-micro text-[11px] text-ink-3">次にやること</p>
             <Link
                 :href="nextAction.href"
-                class="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90 sm:w-auto sm:min-w-64"
+                class="mt-2 inline-flex rounded-full h-11 w-full items-center justify-center gap-2 bg-accent px-6 text-sm font-medium text-white transition-opacity hover:opacity-85 sm:w-auto sm:min-w-64"
             >
                 {{ nextAction.label }}
             </Link>
         </div>
-
-        <Rule class="mt-8" />
 
         <!--
             体重タイル(Issue #21)。下部固定ナビを増やさず、ここからの導線
@@ -138,7 +135,7 @@ const bodyWeightChangeLabel = computed(() => {
             ワークアウト記録の有無とは無関係に、体重だけ先に記録している
             ユーザーもいるため hasRecords の外に置く。
         -->
-        <div class="mt-8">
+        <div class="card mt-6 p-5">
             <div v-if="summary.bodyWeight" class="flex items-end justify-between gap-4">
                 <div class="min-w-0">
                     <StatValue label="体重" :value="summary.bodyWeight.current" unit="kg" />
@@ -148,7 +145,7 @@ const bodyWeightChangeLabel = computed(() => {
                 </div>
                 <Link
                     :href="route('body-logs.index')"
-                    class="label-micro flex h-11 shrink-0 items-center border border-line px-4 text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
+                    class="flex h-9 shrink-0 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
                 >
                     記録する
                 </Link>
@@ -156,20 +153,18 @@ const bodyWeightChangeLabel = computed(() => {
             <Link
                 v-else
                 :href="route('body-logs.index')"
-                class="flex h-12 items-center justify-between border border-line px-4 text-sm text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
+                class="flex items-center justify-between text-sm text-ink-2 transition-colors hover:text-ink"
             >
                 <span>体重を記録する</span>
-                <span aria-hidden="true">&rarr;</span>
+                <span aria-hidden="true">&rsaquo;</span>
             </Link>
         </div>
-
-        <Rule class="mt-8" />
 
         <div v-if="!summary.hasRecords" class="mt-8 text-center">
             <p class="text-sm text-ink-2">まだ記録がありません。</p>
         </div>
 
-        <div v-else class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
+        <div v-else class="card mt-6 grid grid-cols-2 gap-x-6 gap-y-8 p-5 lg:grid-cols-4">
             <div class="min-w-0">
                 <StatValue
                     label="今週の総挙上重量"
@@ -219,13 +214,11 @@ const bodyWeightChangeLabel = computed(() => {
             </div>
         </div>
 
-        <Rule v-if="summary.hasRecords" class="mt-8" />
-
         <!--
             部位バランス(Issue #24②)。記録が少ない期間(直近4週の push+pull
             セット数が少ない)は誤解を招くため、判定不能なときは何も出さない。
         -->
-        <div v-if="summary.muscleBalance.sufficientData" class="mt-8">
+        <div v-if="summary.muscleBalance.sufficientData" class="card mt-6 p-5">
             <p class="label-micro text-[11px] text-ink-3">部位バランス(直近4週・セット数)</p>
             <RatioBar
                 class="mt-3"
@@ -235,17 +228,15 @@ const bodyWeightChangeLabel = computed(() => {
                 right-label="PULL"
                 :warn="summary.muscleBalance.isImbalanced"
             />
-            <p v-if="summary.muscleBalance.isImbalanced" class="mt-2 text-xs text-warn">
+            <p v-if="summary.muscleBalance.isImbalanced" class="mt-2 text-xs text-caution">
                 {{
                     summary.muscleBalance.dominant === 'push' ? '押す種目' : '引く種目'
                 }}に偏っているかもしれません。
             </p>
         </div>
 
-        <Rule v-if="summary.muscleBalance.sufficientData" class="mt-8" />
-
         <!-- 停滞している種目(Issue #24①)。無い場合は何も表示しない。 -->
-        <div v-if="summary.plateauExercises.length > 0" class="mt-8">
+        <div v-if="summary.plateauExercises.length > 0" class="card mt-6 p-5">
             <p class="label-micro text-[11px] text-ink-3">停滞している種目</p>
             <div class="mt-3 space-y-4">
                 <div v-for="item in summary.plateauExercises" :key="item.exerciseId">
@@ -259,7 +250,5 @@ const bodyWeightChangeLabel = computed(() => {
                 </div>
             </div>
         </div>
-
-        <Rule v-if="summary.plateauExercises.length > 0" class="mt-8" />
     </AuthenticatedLayout>
 </template>

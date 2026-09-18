@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
         <div class="mx-auto flex max-w-screen-md items-center gap-2 px-3 py-2 sm:gap-3 sm:px-4">
             <button
                 type="button"
-                class="flex h-11 w-11 shrink-0 items-center justify-center border border-line font-display text-sm text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[--radius-control] bg-surface font-display text-sm text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
                 aria-label="休憩時間を30秒減らす"
                 :disabled="targetSeconds <= MIN_SECONDS"
                 @click="adjust(-STEP_SECONDS)"
@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
 
             <button
                 type="button"
-                class="flex h-11 w-11 shrink-0 items-center justify-center border border-line font-display text-sm text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[--radius-control] bg-surface font-display text-sm text-ink-2 transition-colors hover:border-ink-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30"
                 aria-label="休憩時間を30秒増やす"
                 :disabled="targetSeconds >= MAX_SECONDS"
                 @click="adjust(STEP_SECONDS)"
@@ -247,7 +247,7 @@ onBeforeUnmount(() => {
             <button
                 v-if="running"
                 type="button"
-                class="flex h-11 w-11 shrink-0 items-center justify-center border border-line text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[--radius-control] bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 aria-label="タイマーをリセット"
                 @click="restartNow"
             >
@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
 
             <button
                 type="button"
-                class="flex h-11 w-11 shrink-0 items-center justify-center border border-line text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[--radius-control] bg-surface text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
                 :aria-label="running ? 'タイマーを停止' : 'タイマーを開始'"
                 @click="running ? stopTimer() : restartNow()"
             >

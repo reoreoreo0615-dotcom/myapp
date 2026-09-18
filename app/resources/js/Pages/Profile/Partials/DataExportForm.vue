@@ -59,13 +59,13 @@ const bodyLogsHref = computed(() => exportHref('export.body-logs'));
         <div class="mt-6 flex flex-wrap gap-4">
             <a
                 :href="workoutsHref"
-                class="inline-flex h-12 items-center justify-center gap-2 border border-line px-6 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 active:border-ink active:bg-surface"
+                class="inline-flex rounded-full h-11 items-center justify-center gap-2 bg-surface px-6 text-sm font-medium text-ink transition-colors hover:bg-line active:bg-line"
             >
                 ワークアウト記録をCSVで出力
             </a>
             <a
                 :href="bodyLogsHref"
-                class="inline-flex h-12 items-center justify-center gap-2 border border-line px-6 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 active:border-ink active:bg-surface"
+                class="inline-flex rounded-full h-11 items-center justify-center gap-2 bg-surface px-6 text-sm font-medium text-ink transition-colors hover:bg-line active:bg-line"
             >
                 体重記録をCSVで出力
             </a>

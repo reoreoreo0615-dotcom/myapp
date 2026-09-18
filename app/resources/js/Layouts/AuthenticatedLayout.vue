@@ -63,11 +63,11 @@ const navItems = computed(() => {
             描画しない(記録画面のタイマーがスロット内にあり、二重に描くと
             タイマーが2つ動いてしまう)。
         -->
-        <header class="border-b border-line">
+        <header class="sticky top-0 z-30 border-b border-line bg-ground/80 backdrop-blur-xl">
             <div class="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-3">
                 <Link :href="route('dashboard')" class="flex shrink-0 items-center gap-2">
                     <ApplicationLogo class="h-6 w-6 fill-current text-accent" />
-                    <span class="label-micro text-ink">Overload</span>
+                    <span class="text-base font-semibold tracking-tight text-ink">Overload</span>
                 </Link>
 
                 <!-- ナビはデスクトップのみ。md未満は下部固定バーを使う -->
@@ -75,11 +75,9 @@ const navItems = computed(() => {
                     <li v-for="item in navItems" :key="item.key">
                         <Link
                             :href="item.href"
-                            class="label-micro flex h-11 items-center border-b-2 px-3 transition-colors"
+                            class="flex h-9 items-center rounded-full px-3.5 text-sm font-medium transition-colors"
                             :class="
-                                item.active
-                                    ? 'border-accent text-accent'
-                                    : 'border-transparent text-ink-2 hover:text-ink'
+                                item.active ? 'bg-surface text-ink' : 'text-ink-2 hover:text-ink'
                             "
                             :aria-current="item.active ? 'page' : undefined"
                         >
@@ -92,7 +90,7 @@ const navItems = computed(() => {
                     <!-- ユーザー名は登録情報の編集への導線を兼ねる -->
                     <Link
                         :href="route('profile.edit')"
-                        class="label-micro flex h-11 max-w-32 items-center truncate px-1 transition-colors"
+                        class="flex h-9 max-w-32 items-center truncate px-1 text-sm transition-colors"
                         :class="
                             route().current('profile.edit')
                                 ? 'text-ink'
@@ -106,7 +104,7 @@ const navItems = computed(() => {
                         method="post"
                         as="button"
                         type="button"
-                        class="label-micro flex h-11 items-center border border-line px-3 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink active:bg-surface"
+                        class="flex h-9 items-center rounded-full bg-surface px-4 text-sm font-medium text-ink-2 transition-colors hover:text-ink active:bg-line"
                     >
                         ログアウト
                     </Link>
@@ -119,10 +117,7 @@ const navItems = computed(() => {
             ボタンも間延びする。コンテンツ幅に上限を設けて中央に寄せる。
         -->
         <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-            <div
-                v-if="$slots.header"
-                class="mb-5 flex items-center justify-between gap-4 border-b border-line pb-4"
-            >
+            <div v-if="$slots.header" class="mb-6 flex items-center justify-between gap-4">
                 <slot name="header" />
             </div>
             <slot />
@@ -130,7 +125,7 @@ const navItems = computed(() => {
 
         <!-- 下部固定ナビ(スマホの親指が届く位置)。md以上ではヘッダーのナビに切り替える -->
         <nav
-            class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface md:hidden"
+            class="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ground/90 backdrop-blur-xl md:hidden"
             style="padding-bottom: env(safe-area-inset-bottom)"
         >
             <ul class="flex">
@@ -138,12 +133,8 @@ const navItems = computed(() => {
                     <Link
                         v-if="item.href"
                         :href="item.href"
-                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 border-t-2 px-1 py-2"
-                        :class="
-                            item.active
-                                ? 'border-accent text-accent'
-                                : 'border-transparent text-ink-2'
-                        "
+                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2"
+                        :class="item.active ? 'text-accent' : 'text-ink-3'"
                     >
                         <svg
                             viewBox="0 0 24 24"
@@ -176,12 +167,12 @@ const navItems = computed(() => {
                                 />
                             </template>
                         </svg>
-                        <span class="label-micro text-[10px]">{{ item.label }}</span>
+                        <span class="text-[10px] font-medium">{{ item.label }}</span>
                     </Link>
 
                     <span
                         v-else
-                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 border-t-2 border-transparent px-1 py-2 text-ink-3 opacity-40"
+                        class="flex min-h-[56px] flex-col items-center justify-center gap-1 px-1 py-2 text-ink-3 opacity-40"
                         aria-disabled="true"
                     >
                         <svg
@@ -201,7 +192,7 @@ const navItems = computed(() => {
                                 <path d="M12 7.5V12l3 2" />
                             </template>
                         </svg>
-                        <span class="label-micro text-[10px]">{{ item.label }}</span>
+                        <span class="text-[10px] font-medium">{{ item.label }}</span>
                     </span>
                 </li>
             </ul>

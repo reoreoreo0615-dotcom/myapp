@@ -66,7 +66,7 @@ const formatDate = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">ユーザー管理</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">ユーザー管理</h2>
         </template>
 
         <AdminNav />
@@ -78,7 +78,7 @@ const formatDate = (value) => {
             {{ page.props.flash.error }}
         </div>
 
-        <div class="divide-y divide-line border-t border-line">
+        <div class="card divide-y divide-line px-5">
             <div v-for="user in users" :key="user.id" class="py-4 first:pt-0">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
@@ -92,7 +92,7 @@ const formatDate = (value) => {
                             </span>
                             <span
                                 v-if="user.id === currentUserId"
-                                class="label-micro shrink-0 border border-line px-1.5 py-0.5 text-[10px] text-ink-3"
+                                class="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[11px] text-ink-3"
                             >
                                 あなた
                             </span>

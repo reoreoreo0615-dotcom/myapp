@@ -172,21 +172,21 @@ watch(
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">体重</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">体重</h2>
         </template>
 
         <!-- 履歴画面と同じタブ(Issue #21)。互いに行き来できるようにする。 -->
-        <div class="flex border-b border-line" role="tablist">
+        <div class="flex gap-1 rounded-full bg-surface p-1" role="tablist">
             <Link
                 :href="route('history.index')"
-                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-transparent text-center text-ink-2 transition-colors hover:text-ink"
+                class="flex h-9 flex-1 items-center justify-center rounded-full text-center text-sm font-medium text-ink-2 transition-colors hover:text-ink"
                 role="tab"
                 aria-selected="false"
             >
                 種目別
             </Link>
             <span
-                class="label-micro flex h-11 flex-1 items-center justify-center border-b-2 border-accent text-center text-accent"
+                class="flex h-9 flex-1 items-center justify-center rounded-full bg-card text-center text-sm font-medium text-ink shadow-sm"
                 role="tab"
                 aria-selected="true"
             >
@@ -216,7 +216,7 @@ watch(
                     v-model="form.measured_on"
                     type="date"
                     :max="todayString()"
-                    class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
+                    class="mt-1.5 h-11 w-full rounded-[--radius-control] border border-line bg-surface px-3 text-sm text-ink"
                 />
                 <p v-if="form.errors.measured_on" class="mt-1 text-xs text-warn">
                     {{ form.errors.measured_on }}
@@ -266,7 +266,7 @@ watch(
                     v-model="form.memo"
                     type="text"
                     maxlength="255"
-                    class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
+                    class="mt-1.5 h-11 w-full rounded-[--radius-control] border border-line bg-surface px-3 text-sm text-ink"
                     placeholder="例: 朝食前"
                 />
             </div>
@@ -284,16 +284,16 @@ watch(
         <Rule class="mt-8" />
 
         <!-- 期間フィルタ(履歴画面と同じ選択肢) -->
-        <div class="flex gap-2">
+        <div class="flex gap-1 rounded-full bg-surface p-1">
             <button
                 v-for="option in periodOptions"
                 :key="option.value"
                 type="button"
-                class="label-micro h-10 flex-1 border text-[11px] transition-colors"
+                class="h-9 flex-1 rounded-full text-sm font-medium transition-colors"
                 :class="
                     option.value === period
-                        ? 'border-accent text-accent'
-                        : 'border-line text-ink-2 hover:border-ink-3'
+                        ? 'bg-card text-ink shadow-sm'
+                        : 'text-ink-2 hover:text-ink'
                 "
                 @click="selectPeriod(option.value)"
             >
@@ -339,14 +339,14 @@ watch(
                         <div class="flex shrink-0 gap-2">
                             <button
                                 type="button"
-                                class="label-micro flex h-11 items-center border border-line px-3 text-[10px] text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
+                                class="flex h-11 items-center rounded-full bg-surface px-5 text-sm font-medium text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
                                 @click="startEdit(log)"
                             >
                                 編集
                             </button>
                             <button
                                 type="button"
-                                class="label-micro flex h-11 items-center border border-line px-3 text-[10px] text-warn transition-colors hover:border-warn"
+                                class="flex h-11 items-center rounded-full bg-surface px-5 text-sm font-medium text-warn transition-colors hover:border-warn"
                                 @click="confirmDelete(log)"
                             >
                                 削除

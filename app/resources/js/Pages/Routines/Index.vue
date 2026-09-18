@@ -4,7 +4,6 @@ import DangerButton from '@/Components/DangerButton.vue';
 import DangerOutlineButton from '@/Components/DangerOutlineButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
-import Rule from '@/Components/Rule.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -57,7 +56,7 @@ function undoDelete() {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">メニュー</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">メニュー</h2>
         </template>
 
         <div
@@ -77,19 +76,17 @@ function undoDelete() {
 
         <Link
             :href="route('routines.create')"
-            class="inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90 sm:w-auto sm:min-w-64"
+            class="inline-flex rounded-full h-11 w-full items-center justify-center gap-2 bg-accent px-6 text-sm font-medium text-white transition-opacity hover:opacity-85 sm:w-auto sm:min-w-64"
         >
             + 新しいメニューを作成
         </Link>
 
-        <Rule class="mt-6" />
-
-        <div v-if="routines.length === 0" class="py-8 text-center text-sm text-ink-2">
+        <div v-if="routines.length === 0" class="card mt-6 p-8 text-center text-sm text-ink-2">
             メニューがまだありません。「胸の日」「Pull の日」のように、
             トレーニングの組み合わせを作成しましょう。
         </div>
 
-        <div v-else class="divide-y divide-line">
+        <div v-else class="card mt-6 divide-y divide-line px-5">
             <!-- 広い画面では、操作ボタンを行の右端に置いて1行に収める -->
             <div
                 v-for="routine in routines"
@@ -109,7 +106,7 @@ function undoDelete() {
                 <div class="mt-3 flex flex-wrap gap-2 sm:mt-0 sm:shrink-0">
                     <Link
                         :href="route('routines.edit', routine.id)"
-                        class="inline-flex h-11 items-center justify-center gap-2 border border-line px-5 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
+                        class="inline-flex rounded-full h-11 items-center justify-center gap-2 bg-surface px-5 text-sm font-medium text-ink transition-colors hover:bg-line"
                     >
                         編集
                     </Link>

@@ -457,16 +457,13 @@ function finishWorkout() {
                 元に戻す
             </button>
         </div>
-        <div
-            v-if="page.props.flash?.info"
-            class="mb-4 border border-line px-4 py-3 text-sm text-ink-2"
-        >
+        <div v-if="page.props.flash?.info" class="card mb-4 px-4 py-3 text-sm text-ink-2">
             {{ page.props.flash.info }}
         </div>
 
         <div
             v-if="isEditing"
-            class="label-micro mb-6 flex flex-wrap items-center justify-between gap-3 border border-line px-4 py-3 text-ink-2"
+            class="card mb-6 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-ink-2"
         >
             <span class="font-medium text-accent">修正中(セットの追加・編集・削除ができます)</span>
             <button
@@ -480,7 +477,7 @@ function finishWorkout() {
         </div>
         <div
             v-else-if="isFinished"
-            class="label-micro mb-6 flex flex-wrap items-center justify-between gap-3 border border-line px-4 py-3 text-ink-2"
+            class="card mb-6 flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm text-ink-2"
         >
             <span>終了済み・閲覧専用</span>
             <span class="flex flex-wrap gap-4">
@@ -509,8 +506,8 @@ function finishWorkout() {
             記録する種目がありません。下から種目を追加してください。
         </div>
 
-        <div v-else class="space-y-8">
-            <section v-for="exercise in visibleExercises" :key="exercise.id">
+        <div v-else class="space-y-5">
+            <section v-for="exercise in visibleExercises" :key="exercise.id" class="card p-5">
                 <div class="flex items-baseline justify-between gap-2">
                     <h3 class="min-w-0 truncate font-medium text-ink">{{ exercise.name }}</h3>
                     <span class="label-micro shrink-0 text-[10px] text-ink-3">
@@ -599,7 +596,7 @@ function finishWorkout() {
             <Rule class="mt-8" />
             <button
                 type="button"
-                class="inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
+                class="inline-flex rounded-full h-11 w-full items-center justify-center gap-2 bg-surface text-sm font-medium text-ink transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
                 :disabled="finishing"
                 @click="finishWorkout"
             >
@@ -612,12 +609,12 @@ function finishWorkout() {
 
             <div v-if="showPicker" class="mt-4">
                 <p class="label-micro mb-2 text-[11px] text-ink-3">種目を選択</p>
-                <div class="max-h-64 divide-y divide-line overflow-y-auto border border-line">
+                <div class="card max-h-64 divide-y divide-line overflow-y-auto">
                     <button
                         v-for="exercise in remainingExercises"
                         :key="exercise.id"
                         type="button"
-                        class="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-surface"
+                        class="flex min-h-[44px] w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm text-ink hover:bg-surface"
                         @click="addExercise(exercise)"
                     >
                         <span class="truncate">{{ exercise.name }}</span>
@@ -631,7 +628,7 @@ function finishWorkout() {
                 </div>
                 <button
                     type="button"
-                    class="mt-2 h-11 w-full border border-line font-mono text-xs uppercase tracking-widest text-ink-2"
+                    class="rounded-full mt-2 h-11 w-full bg-surface text-sm font-medium text-ink-2"
                     @click="showPicker = false"
                 >
                     閉じる
@@ -640,7 +637,7 @@ function finishWorkout() {
             <button
                 v-else
                 type="button"
-                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 sm:w-auto sm:min-w-64 sm:px-8"
+                class="mt-4 inline-flex rounded-full h-11 w-full items-center justify-center gap-2 bg-surface text-sm font-medium text-ink transition-colors hover:bg-line sm:w-auto sm:min-w-64 sm:px-8"
                 @click="showPicker = true"
             >
                 + 種目を追加
@@ -651,7 +648,7 @@ function finishWorkout() {
         <div class="mt-4 flex justify-end">
             <button
                 type="button"
-                class="label-micro flex h-11 items-center border border-line px-3 text-[10px] text-warn transition-colors hover:border-warn"
+                class="flex h-11 items-center rounded-full bg-surface px-5 text-sm font-medium text-warn transition-colors hover:bg-line"
                 @click="confirmingDeleteWorkout = true"
             >
                 このワークアウトを削除する

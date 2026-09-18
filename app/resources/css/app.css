@@ -5,52 +5,67 @@
 @source '../../storage/framework/views/*.php';
 
 /*
- * デザイン方向: 計器 / Precision (Issue #16)
- * 体の進捗を測る精密機器としてアプリを設計する。数値が主役、装飾は限界まで削る。
- * ダーク基調がデフォルト値。OSがライトを指定していればライトに切り替わる。
- * 角丸カード・ドロップシャドウ・グラデーションは使わない。区切りは細線(hairline)のみ。
+ * デザイン方向: iOS の設定画面に近い作り(Issue #34 で見直し)
+ * 面(カード)で情報をまとめ、角丸と余白で区切る。線は最小限にする。
+ * 既定はライト。OS がダークを指定していればダークに切り替わる。
+ * 書体は端末標準(iPhone / Mac では San Francisco と Hiragino)を使う。
  */
 
 @theme {
-    /* 書体は Noto Sans JP に統一。階層はウェイト(300〜800)と字間で作る。 */
-    --font-sans: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+    /* 端末標準の書体を使う。日本語は Hiragino、無い環境では Noto Sans JP に落とす。 */
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Segoe UI', system-ui,
+        sans-serif;
+    --font-display:
+        -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', 'Segoe UI', system-ui,
+        sans-serif;
+    --font-mono:
+        ui-monospace, SFMono-Regular, 'SF Mono', Menlo, 'Hiragino Sans', 'Noto Sans JP', monospace;
 
-    /* 色トークン: ダーク(既定値)。ライトは下の @media で上書きする */
-    --color-ground: #14171a;
-    --color-surface: #1b1f23;
-    --color-line: #2a3037;
-    --color-ink: #e8eaed;
-    --color-ink-2: #9aa3ac;
-    --color-ink-3: #646d77;
-    --color-accent: #4a90d9;
-    --color-ok: #4fb783;
-    --color-warn: #d9784a;
+    /* 色トークン: ライト(既定値)。ダークは下の @media で上書きする */
+    --color-ground: #ffffff;
+    --color-surface: #f5f5f7;
+    --color-card: #ffffff;
+    --color-line: #e3e3e8;
+    --color-ink: #1d1d1f;
+    --color-ink-2: #6e6e73;
+    --color-ink-3: #8e8e93;
+    --color-accent: #0071e3;
+    --color-ok: #248a3d;
+    --color-warn: #d70015;
+    /* 注意(破壊的ではない気づき)。削除などの警告と区別するため橙にする */
+    --color-caution: #b25000;
+
+    /* 角丸: カード(面)と部品で2段階だけ使う */
+    --radius-card: 0.875rem;
+    --radius-control: 0.625rem;
 }
 
-/* ライトテーマ: OS が light を指定している場合のみ上書き(既定はダーク) */
-@media (prefers-color-scheme: light) {
+/* ダークテーマ: OS が dark を指定している場合のみ上書き(既定はライト) */
+@media (prefers-color-scheme: dark) {
     :root {
-        --color-ground: #f7f8f9;
-        --color-surface: #ffffff;
-        --color-line: #dfe3e7;
-        --color-ink: #14171a;
-        --color-ink-2: #5a636c;
-        --color-ink-3: #8b939c;
-        --color-accent: #1f5fa9;
-        --color-ok: #2c7a57;
-        --color-warn: #b0503a;
+        --color-ground: #000000;
+        --color-surface: #2c2c2e;
+        --color-card: #1c1c1e;
+        --color-line: #38383a;
+        --color-ink: #f5f5f7;
+        --color-ink-2: #aeaeb2;
+        --color-ink-3: #8e8e93;
+        --color-accent: #0a84ff;
+        --color-ok: #30d158;
+        --color-warn: #ff453a;
+        --color-caution: #ff9f0a;
     }
 }
 
 @layer base {
     html {
-        color-scheme: dark light;
+        color-scheme: light dark;
     }
 
     body {
         @apply bg-ground text-ink;
+        letter-spacing: -0.01em;
         font-feature-settings:
             'tnum' 1,
             'cv01' 0;
@@ -65,13 +80,21 @@
 }
 
 @layer utilities {
-    /* 微細ラベル(TARGET / PREV など)。
-       書体を統一したため、本文との差は字間・ウェイト・大文字で作る。 */
+    /* 小見出し・補助ラベル。
+       全大文字の字間を広げる表現はやめ、サイズと色で本文と差をつける。 */
     .label-micro {
         font-family: var(--font-sans);
         font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    /* 情報をまとめる面。iOS の設定画面のグループに相当する */
+    /* 情報をまとめる面。iOS の設定画面のグループに相当する */
+    .card {
+        background-color: var(--color-card);
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
     }
 }
 

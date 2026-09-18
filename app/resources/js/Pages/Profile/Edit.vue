@@ -21,26 +21,26 @@ defineProps({
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">プロフィール</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">プロフィール</h2>
         </template>
 
-        <div class="divide-y divide-line border-t border-line">
-            <section class="py-6 first:pt-0">
+        <div class="space-y-5">
+            <section class="card p-6">
                 <UpdateProfileInformationForm
                     :must-verify-email="mustVerifyEmail"
                     :status="status"
                 />
             </section>
 
-            <section class="py-6">
+            <section class="card p-6">
                 <UpdatePasswordForm />
             </section>
 
-            <section class="py-6">
+            <section class="card p-6">
                 <DataExportForm />
             </section>
 
-            <section class="py-6">
+            <section class="card p-6">
                 <DeleteUserForm />
             </section>
         </div>

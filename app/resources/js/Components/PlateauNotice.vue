@@ -41,7 +41,7 @@ function suggestionText(suggestion) {
 <template>
     <div v-if="!dismissed" class="mt-3 border-l-2 border-warn py-1 pl-3">
         <div class="flex items-start justify-between gap-3">
-            <p class="label-micro text-[10px] text-warn">
+            <p class="label-micro text-[10px] text-caution">
                 {{ statusLabel }}・直近{{ plateau.sessions_without_update }}回、更新なし
             </p>
             <button

@@ -204,7 +204,7 @@ const createCustomExercise = () => {
                         id="description"
                         v-model="detailsForm.description"
                         rows="2"
-                        class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
+                        class="mt-1 block w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
                     ></textarea>
                     <InputError class="mt-2" :message="detailsForm.errors.description" />
                 </div>
@@ -252,7 +252,7 @@ const createCustomExercise = () => {
                         <div class="flex shrink-0 gap-1 sm:order-last">
                             <button
                                 type="button"
-                                class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                                class="flex h-11 w-11 items-center justify-center rounded-[--radius-control] bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-30"
                                 aria-label="上へ移動"
                                 :disabled="index === 0 || reordering"
                                 @click="move(index, -1)"
@@ -261,7 +261,7 @@ const createCustomExercise = () => {
                             </button>
                             <button
                                 type="button"
-                                class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                                class="flex h-11 w-11 items-center justify-center rounded-[--radius-control] bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-30"
                                 aria-label="下へ移動"
                                 :disabled="index === exercises.length - 1 || reordering"
                                 @click="move(index, 1)"
@@ -287,7 +287,7 @@ const createCustomExercise = () => {
 
                         <button
                             type="button"
-                            class="label-micro h-11 shrink-0 border border-line px-3 text-xs text-warn disabled:cursor-not-allowed disabled:opacity-40"
+                            class="h-11 shrink-0 rounded-full bg-surface px-5 text-sm font-medium text-warn disabled:cursor-not-allowed disabled:opacity-40"
                             :disabled="removingId === exercise.id"
                             @click="removeExercise(exercise.id)"
                         >
@@ -307,7 +307,7 @@ const createCustomExercise = () => {
             <div class="mt-3 space-y-3">
                 <select
                     v-model="addForm.exercise_id"
-                    class="w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
+                    class="w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
                 >
                     <option value="" disabled>種目を選択</option>
                     <optgroup
@@ -342,7 +342,7 @@ const createCustomExercise = () => {
 
             <form
                 v-if="showCustomExerciseForm"
-                class="mt-3 space-y-4 border border-line p-4"
+                class="card mt-3 space-y-4 p-5"
                 @submit.prevent="createCustomExercise"
             >
                 <div>
@@ -363,7 +363,7 @@ const createCustomExercise = () => {
                     <select
                         id="exercise-muscle-group"
                         v-model="customExerciseForm.muscle_group"
-                        class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                        class="mt-1 block w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     >
                         <option
                             v-for="(label, value) in muscleGroupLabels"
@@ -381,7 +381,7 @@ const createCustomExercise = () => {
                     <select
                         id="exercise-equipment"
                         v-model="customExerciseForm.equipment"
-                        class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                        class="mt-1 block w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     >
                         <option
                             v-for="(label, value) in equipmentLabels"

@@ -18,17 +18,13 @@ const items = [
 </script>
 
 <template>
-    <nav class="mb-6 flex gap-1 border-b border-line">
+    <nav class="mb-6 inline-flex gap-1 rounded-full bg-surface p-1">
         <Link
             v-for="item in items"
             :key="item.key"
             :href="item.href"
-            class="label-micro flex h-11 items-center border-b-2 px-3 text-[11px]"
-            :class="
-                item.active
-                    ? 'border-accent text-accent'
-                    : 'border-transparent text-ink-2 hover:text-ink'
-            "
+            class="flex h-9 items-center rounded-full px-5 text-sm font-medium transition-colors"
+            :class="item.active ? 'bg-card text-ink shadow-sm' : 'text-ink-2 hover:text-ink'"
         >
             {{ item.label }}
         </Link>

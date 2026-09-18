@@ -1,6 +1,5 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import Rule from '@/Components/Rule.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -60,7 +59,7 @@ function undoDelete() {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">記録を開始</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">記録を開始</h2>
         </template>
 
         <div
@@ -77,10 +76,7 @@ function undoDelete() {
                 元に戻す
             </button>
         </div>
-        <div
-            v-if="page.props.flash?.info"
-            class="mb-4 border border-line px-4 py-3 text-sm text-ink-2"
-        >
+        <div v-if="page.props.flash?.info" class="card mb-4 px-4 py-3 text-sm text-ink-2">
             {{ page.props.flash.info }}
         </div>
 
@@ -93,19 +89,17 @@ function undoDelete() {
                 v-model="performedOn"
                 type="date"
                 :max="todayString()"
-                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink sm:max-w-56"
+                class="mt-1.5 h-11 w-full rounded-[--radius-control] border border-line bg-surface px-3 text-sm text-ink sm:max-w-56"
             />
         </div>
 
         <p class="text-sm text-ink-2">メニューを選ぶと、そのメニューの種目が記録画面に並びます。</p>
 
-        <Rule class="mt-6" />
-
-        <div v-if="routines.length === 0" class="py-8 text-center text-sm text-ink-2">
+        <div v-if="routines.length === 0" class="card mt-6 p-8 text-center text-sm text-ink-2">
             まだメニューがありません。メニューなしでもワークアウトを開始できます。
         </div>
 
-        <div v-else class="divide-y divide-line">
+        <div v-else class="card mt-6 divide-y divide-line px-5">
             <button
                 v-for="routine in routines"
                 :key="routine.id"
@@ -124,11 +118,9 @@ function undoDelete() {
             </button>
         </div>
 
-        <Rule class="mt-2" />
-
         <button
             type="button"
-            class="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
+            class="mt-6 inline-flex rounded-full h-11 w-full items-center justify-center gap-2 bg-surface text-sm font-medium text-ink transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
             :disabled="starting"
             @click="start(null)"
         >

@@ -21,7 +21,7 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">メニューを作成</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">メニューを作成</h2>
         </template>
 
         <p class="text-sm text-ink-2">
@@ -50,7 +50,7 @@ const submit = () => {
                     id="description"
                     v-model="form.description"
                     rows="3"
-                    class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent"
+                    class="mt-1 block w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent"
                     placeholder="このメニューについてのメモ"
                 ></textarea>
                 <InputError class="mt-2" :message="form.errors.description" />
@@ -60,7 +60,7 @@ const submit = () => {
                 <PrimaryButton :disabled="form.processing">作成</PrimaryButton>
                 <Link
                     :href="route('routines.index')"
-                    class="inline-flex h-12 items-center justify-center gap-2 border border-line px-6 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
+                    class="inline-flex rounded-full h-11 items-center justify-center gap-2 bg-surface px-6 text-sm font-medium text-ink transition-colors hover:bg-line"
                 >
                     キャンセル
                 </Link>

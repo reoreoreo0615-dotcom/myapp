@@ -247,7 +247,7 @@ const deleteExercise = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-lg font-medium text-ink">種目マスタ管理</h2>
+            <h2 class="text-2xl font-semibold tracking-tight text-ink">種目マスタ管理</h2>
         </template>
 
         <AdminNav />
@@ -271,7 +271,7 @@ const deleteExercise = () => {
                 <InputLabel value="部位で絞り込み" />
                 <select
                     v-model="filterMuscleGroup"
-                    class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                    class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     @change="applyFilters"
                 >
                     <option value="">すべて</option>
@@ -284,7 +284,7 @@ const deleteExercise = () => {
                 <InputLabel value="器具で絞り込み" />
                 <select
                     v-model="filterEquipment"
-                    class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                    class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     @change="applyFilters"
                 >
                     <option value="">すべて</option>
@@ -309,7 +309,7 @@ const deleteExercise = () => {
                 {{ muscleGroupLabels[group.muscleGroup] ?? group.muscleGroup }}
             </h3>
 
-            <div class="divide-y divide-line">
+            <div class="card divide-y divide-line px-5">
                 <div
                     v-for="(exercise, index) in group.items"
                     :key="exercise.id"
@@ -318,7 +318,7 @@ const deleteExercise = () => {
                     <div class="flex shrink-0 flex-col gap-1">
                         <button
                             type="button"
-                            class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                            class="flex h-11 w-11 items-center justify-center rounded-[--radius-control] bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-30"
                             aria-label="上へ移動"
                             :disabled="index === 0 || reordering || reorderDisabled"
                             @click="move(group, index, -1)"
@@ -327,7 +327,7 @@ const deleteExercise = () => {
                         </button>
                         <button
                             type="button"
-                            class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
+                            class="flex h-11 w-11 items-center justify-center rounded-[--radius-control] bg-surface text-ink disabled:cursor-not-allowed disabled:opacity-30"
                             aria-label="下へ移動"
                             :disabled="
                                 index === group.items.length - 1 || reordering || reorderDisabled
@@ -344,7 +344,7 @@ const deleteExercise = () => {
                             <span class="truncate">{{ exercise.name }}</span>
                             <span
                                 v-if="exercise.is_bodyweight"
-                                class="label-micro shrink-0 border border-line px-1.5 py-0.5 text-[10px] text-ink-3"
+                                class="shrink-0 rounded-full bg-surface px-2 py-0.5 text-[11px] text-ink-3"
                             >
                                 自重
                             </span>
@@ -446,7 +446,7 @@ const deleteExercise = () => {
                         <select
                             id="muscle_group"
                             v-model="form.muscle_group"
-                            class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                            class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                         >
                             <option v-for="mg in muscleGroups" :key="mg" :value="mg">
                                 {{ muscleGroupLabels[mg] ?? mg }}
@@ -459,7 +459,7 @@ const deleteExercise = () => {
                         <select
                             id="movement_type"
                             v-model="form.movement_type"
-                            class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                            class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                         >
                             <option v-for="mt in movementTypes" :key="mt" :value="mt">
                                 {{ movementTypeLabels[mt] ?? mt }}
@@ -474,7 +474,7 @@ const deleteExercise = () => {
                     <select
                         id="equipment"
                         v-model="form.equipment"
-                        class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                        class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     >
                         <option v-for="eq in equipmentOptions" :key="eq" :value="eq">
                             {{ equipmentLabels[eq] ?? eq }}
@@ -552,7 +552,7 @@ const deleteExercise = () => {
                     <select
                         id="progression_strategy"
                         v-model="form.progression_strategy"
-                        class="mt-1 w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                        class="mt-1 w-full rounded-[--radius-control] border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
                     >
                         <option v-for="ps in progressionStrategies" :key="ps" :value="ps">
                             {{ progressionStrategyLabels[ps] ?? ps }}

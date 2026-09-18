@@ -195,7 +195,7 @@ function clearRpe() {
             <button
                 v-if="editing"
                 type="button"
-                class="h-12 shrink-0 border border-line px-4 font-mono text-xs uppercase tracking-widest text-ink-2 transition-colors hover:border-ink-3 disabled:cursor-not-allowed disabled:opacity-40"
+                class="rounded-full h-11 shrink-0 bg-surface px-4 text-sm font-medium text-ink-2 transition-colors hover:border-ink-3 disabled:cursor-not-allowed disabled:opacity-40"
                 :disabled="processing"
                 @click="emit('edit-cancel')"
             >
@@ -203,7 +203,7 @@ function clearRpe() {
             </button>
             <button
                 type="button"
-                class="h-12 flex-1 bg-accent font-mono text-xs uppercase tracking-widest text-ground transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                class="rounded-full h-11 flex-1 bg-accent text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
                 :disabled="processing"
                 @click="editing ? emit('edit-save') : emit('record')"
             >
