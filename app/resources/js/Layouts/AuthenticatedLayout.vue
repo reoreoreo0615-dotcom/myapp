@@ -89,7 +89,18 @@ const navItems = computed(() => {
                 </ul>
 
                 <div class="ml-auto flex shrink-0 items-center gap-3">
-                    <span class="label-micro max-w-24 truncate text-ink-3">{{ userName }}</span>
+                    <!-- ユーザー名は登録情報の編集への導線を兼ねる -->
+                    <Link
+                        :href="route('profile.edit')"
+                        class="label-micro flex h-11 max-w-32 items-center truncate px-1 transition-colors"
+                        :class="
+                            route().current('profile.edit')
+                                ? 'text-ink'
+                                : 'text-ink-3 hover:text-ink'
+                        "
+                    >
+                        {{ userName }}
+                    </Link>
                     <Link
                         :href="route('logout')"
                         method="post"

@@ -86,6 +86,13 @@ const submit = () => {
                 >
                     パスワードをお忘れですか?
                 </Link>
+
+                <Link
+                    :href="route('register')"
+                    class="text-center text-sm text-ink-2 underline underline-offset-2 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                    アカウントをお持ちでない方はこちら
+                </Link>
             </div>
         </form>
     </GuestLayout>
