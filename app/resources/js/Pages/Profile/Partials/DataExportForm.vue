@@ -42,7 +42,7 @@ const bodyLogsHref = computed(() => exportHref('export.body-logs'));
                     id="export-from"
                     v-model="period.from"
                     type="date"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full sm:max-w-md"
                 />
             </div>
             <div class="min-w-40 flex-1">
@@ -51,7 +51,7 @@ const bodyLogsHref = computed(() => exportHref('export.body-logs'));
                     id="export-to"
                     v-model="period.to"
                     type="date"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full sm:max-w-md"
                 />
             </div>
         </div>

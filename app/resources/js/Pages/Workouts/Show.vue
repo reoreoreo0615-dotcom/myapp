@@ -599,7 +599,7 @@ function finishWorkout() {
             <Rule class="mt-8" />
             <button
                 type="button"
-                class="inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40"
+                class="inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
                 :disabled="finishing"
                 @click="finishWorkout"
             >
@@ -640,7 +640,7 @@ function finishWorkout() {
             <button
                 v-else
                 type="button"
-                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
+                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 sm:w-auto sm:min-w-64 sm:px-8"
                 @click="showPicker = true"
             >
                 + 種目を追加

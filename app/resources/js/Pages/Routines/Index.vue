@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DangerButton from '@/Components/DangerButton.vue';
+import DangerOutlineButton from '@/Components/DangerOutlineButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import Rule from '@/Components/Rule.vue';
@@ -76,7 +77,7 @@ function undoDelete() {
 
         <Link
             :href="route('routines.create')"
-            class="inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
+            class="inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90 sm:w-auto sm:min-w-64"
         >
             + 新しいメニューを作成
         </Link>
@@ -89,27 +90,32 @@ function undoDelete() {
         </div>
 
         <div v-else class="divide-y divide-line">
-            <div v-for="routine in routines" :key="routine.id" class="py-4 first:pt-4">
-                <div class="flex items-start justify-between gap-3">
-                    <Link :href="route('routines.edit', routine.id)" class="min-w-0 flex-1">
-                        <p class="truncate font-medium text-ink">{{ routine.name }}</p>
-                        <p v-if="routine.description" class="mt-1 truncate text-sm text-ink-2">
-                            {{ routine.description }}
-                        </p>
-                        <p class="label-micro mt-2 text-[10px] text-ink-3">
-                            {{ routine.exercises_count }}種目
-                        </p>
-                    </Link>
-                </div>
+            <!-- 広い画面では、操作ボタンを行の右端に置いて1行に収める -->
+            <div
+                v-for="routine in routines"
+                :key="routine.id"
+                class="py-4 first:pt-4 sm:flex sm:items-center sm:justify-between sm:gap-6"
+            >
+                <Link :href="route('routines.edit', routine.id)" class="block min-w-0 flex-1">
+                    <p class="truncate font-medium text-ink">{{ routine.name }}</p>
+                    <p v-if="routine.description" class="mt-1 truncate text-sm text-ink-2">
+                        {{ routine.description }}
+                    </p>
+                    <p class="label-micro mt-2 text-[10px] text-ink-3">
+                        {{ routine.exercises_count }}種目
+                    </p>
+                </Link>
 
-                <div class="mt-3 flex flex-wrap gap-2">
+                <div class="mt-3 flex flex-wrap gap-2 sm:mt-0 sm:shrink-0">
                     <Link
                         :href="route('routines.edit', routine.id)"
-                        class="inline-flex h-12 items-center justify-center gap-2 border border-line px-6 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
+                        class="inline-flex h-11 items-center justify-center gap-2 border border-line px-5 font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2"
                     >
                         編集
                     </Link>
-                    <DangerButton @click="confirmDelete(routine)">削除</DangerButton>
+                    <DangerOutlineButton @click="confirmDelete(routine)">
+                        削除
+                    </DangerOutlineButton>
                 </div>
             </div>
         </div>

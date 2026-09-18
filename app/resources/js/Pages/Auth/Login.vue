@@ -43,9 +43,9 @@ const submit = () => {
 
                 <TextInput
                     id="email"
-                    type="email"
-                    class="mt-1 block w-full"
                     v-model="form.email"
+                    type="email"
+                    class="mt-1 block w-full sm:max-w-md"
                     required
                     autofocus
                     autocomplete="username"
@@ -59,9 +59,9 @@ const submit = () => {
 
                 <TextInput
                     id="password"
-                    type="password"
-                    class="mt-1 block w-full"
                     v-model="form.password"
+                    type="password"
+                    class="mt-1 block w-full sm:max-w-md"
                     required
                     autocomplete="current-password"
                 />
@@ -71,7 +71,7 @@ const submit = () => {
 
             <div class="mt-4 block">
                 <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
+                    <Checkbox v-model:checked="form.remember" name="remember" />
                     <span class="ms-2 text-sm text-ink-2">ログイン状態を保持する</span>
                 </label>
             </div>

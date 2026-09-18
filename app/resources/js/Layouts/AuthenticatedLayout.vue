@@ -64,7 +64,7 @@ const navItems = computed(() => {
             タイマーが2つ動いてしまう)。
         -->
         <header class="border-b border-line">
-            <div class="flex items-center gap-4 px-4 py-3">
+            <div class="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-3">
                 <Link :href="route('dashboard')" class="flex shrink-0 items-center gap-2">
                     <ApplicationLogo class="h-6 w-6 fill-current text-accent" />
                     <span class="label-micro text-ink">Overload</span>
@@ -103,7 +103,11 @@ const navItems = computed(() => {
             </div>
         </header>
 
-        <main class="flex-1 px-4 py-6">
+        <!--
+            広い画面で本文が端まで伸びると、1行が長すぎて読みにくく、
+            ボタンも間延びする。コンテンツ幅に上限を設けて中央に寄せる。
+        -->
+        <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
             <div
                 v-if="$slots.header"
                 class="mb-5 flex items-center justify-between gap-4 border-b border-line pb-4"

@@ -93,7 +93,7 @@ function undoDelete() {
                 v-model="performedOn"
                 type="date"
                 :max="todayString()"
-                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
+                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink sm:max-w-56"
             />
         </div>
 
@@ -128,7 +128,7 @@ function undoDelete() {
 
         <button
             type="button"
-            class="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40"
+            class="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 border border-line font-mono text-xs uppercase tracking-widest text-ink transition-colors hover:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-64 sm:px-8"
             :disabled="starting"
             @click="start(null)"
         >

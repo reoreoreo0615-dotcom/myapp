@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import AdminNav from '@/Components/AdminNav.vue';
 import DangerButton from '@/Components/DangerButton.vue';
+import DangerOutlineButton from '@/Components/DangerOutlineButton.vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
@@ -128,7 +129,7 @@ const formatDate = (value) => {
                     >
                         {{ user.is_admin ? '管理者権限を剥奪' : '管理者にする' }}
                     </SecondaryButton>
-                    <DangerButton @click="confirmDelete(user)"> 削除 </DangerButton>
+                    <DangerOutlineButton @click="confirmDelete(user)"> 削除 </DangerOutlineButton>
                 </div>
                 <p v-else class="mt-4 text-xs text-ink-3">自分自身の削除・権限変更はできません</p>
             </div>

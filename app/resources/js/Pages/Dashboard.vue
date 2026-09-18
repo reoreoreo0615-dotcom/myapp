@@ -124,7 +124,7 @@ const bodyWeightChangeLabel = computed(() => {
             <p class="label-micro text-[11px] text-ink-3">次にやること</p>
             <Link
                 :href="nextAction.href"
-                class="mt-2 flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90"
+                class="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 bg-accent px-6 font-mono text-xs uppercase tracking-widest text-ground transition-opacity hover:opacity-90 sm:w-auto sm:min-w-64"
             >
                 {{ nextAction.label }}
             </Link>
@@ -169,7 +169,7 @@ const bodyWeightChangeLabel = computed(() => {
             <p class="text-sm text-ink-2">まだ記録がありません。</p>
         </div>
 
-        <div v-else class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8">
+        <div v-else class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4">
             <div class="min-w-0">
                 <StatValue
                     label="今週の総挙上重量"

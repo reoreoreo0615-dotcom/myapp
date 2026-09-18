@@ -29,7 +29,7 @@ const verificationLinkSent = computed(() => props.status === 'verification-link-
             再度お送りします。
         </div>
 
-        <div class="mb-4 text-sm font-medium text-ok" v-if="verificationLinkSent">
+        <div v-if="verificationLinkSent" class="mb-4 text-sm font-medium text-ok">
             ご登録いただいたメールアドレスに、新しい確認用リンクを送信しました。
         </div>
 

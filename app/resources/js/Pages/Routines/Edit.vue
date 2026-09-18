@@ -191,7 +191,7 @@ const createCustomExercise = () => {
                         id="name"
                         v-model="detailsForm.name"
                         type="text"
-                        class="mt-1 block w-full"
+                        class="mt-1 block w-full sm:max-w-md"
                         maxlength="60"
                         required
                     />
@@ -204,7 +204,7 @@ const createCustomExercise = () => {
                         id="description"
                         v-model="detailsForm.description"
                         rows="2"
-                        class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent"
+                        class="mt-1 block w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink shadow-none placeholder:text-ink-3 focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
                     ></textarea>
                     <InputError class="mt-2" :message="detailsForm.errors.description" />
                 </div>
@@ -226,8 +226,13 @@ const createCustomExercise = () => {
             </div>
 
             <ol v-else class="mt-3 divide-y divide-line">
-                <li v-for="(exercise, index) in exercises" :key="exercise.id" class="py-3">
-                    <div class="flex items-center gap-3">
+                <!-- 広い画面では、並べ替え・セット数・削除を1行にまとめる -->
+                <li
+                    v-for="(exercise, index) in exercises"
+                    :key="exercise.id"
+                    class="py-3 sm:flex sm:items-center sm:gap-4"
+                >
+                    <div class="flex items-center gap-3 sm:min-w-0 sm:flex-1">
                         <span
                             class="w-5 shrink-0 text-center font-mono text-xs tabular-nums text-ink-3"
                         >
@@ -244,7 +249,7 @@ const createCustomExercise = () => {
                             </p>
                         </div>
 
-                        <div class="flex shrink-0 flex-col gap-1">
+                        <div class="flex shrink-0 gap-1 sm:order-last">
                             <button
                                 type="button"
                                 class="flex h-11 w-11 items-center justify-center border border-line text-ink disabled:cursor-not-allowed disabled:opacity-30"
@@ -266,7 +271,9 @@ const createCustomExercise = () => {
                         </div>
                     </div>
 
-                    <div class="mt-3 flex items-center justify-between gap-3">
+                    <div
+                        class="mt-3 flex items-center justify-between gap-3 sm:mt-0 sm:shrink-0 sm:justify-end sm:gap-4"
+                    >
                         <div class="flex items-center gap-2">
                             <span class="label-micro text-[10px] text-ink-3">目標セット数</span>
                             <NumberStepper
@@ -300,7 +307,7 @@ const createCustomExercise = () => {
             <div class="mt-3 space-y-3">
                 <select
                     v-model="addForm.exercise_id"
-                    class="w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent"
+                    class="w-full rounded-none border-line bg-surface px-3 py-2.5 text-ink focus:border-accent focus:ring-1 focus:ring-accent sm:max-w-md"
                 >
                     <option value="" disabled>種目を選択</option>
                     <optgroup
@@ -317,7 +324,7 @@ const createCustomExercise = () => {
                 <InputError :message="addForm.errors.exercise_id" />
 
                 <PrimaryButton
-                    class="w-full"
+                    class="w-full sm:w-auto sm:min-w-64"
                     :disabled="!addForm.exercise_id || addForm.processing"
                     @click="addExercise"
                 >

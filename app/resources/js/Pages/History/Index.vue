@@ -116,7 +116,7 @@ function formatMonthDay(isoDate) {
             >
             <select
                 id="history-exercise"
-                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink"
+                class="mt-1.5 h-11 w-full border border-line bg-surface px-3 text-sm text-ink sm:max-w-md"
                 :value="selectedExerciseId ?? ''"
                 @change="onExerciseChange"
             >

@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import AdminNav from '@/Components/AdminNav.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import DangerButton from '@/Components/DangerButton.vue';
+import DangerOutlineButton from '@/Components/DangerOutlineButton.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Modal from '@/Components/Modal.vue';
@@ -337,7 +338,8 @@ const deleteExercise = () => {
                         </button>
                     </div>
 
-                    <div class="min-w-0 flex-1">
+                    <div class="relative min-w-0 flex-1 sm:pr-48">
+                        <!-- 広い画面では、行の右端に操作ボタンを置いて縦の間延びを防ぐ -->
                         <p class="flex flex-wrap items-center gap-2 font-medium text-ink">
                             <span class="truncate">{{ exercise.name }}</span>
                             <span
@@ -393,11 +395,13 @@ const deleteExercise = () => {
                             >件
                         </p>
 
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <SecondaryButton @click="openEditModal(exercise)">
+                        <div
+                            class="mt-3 flex flex-wrap gap-2 sm:absolute sm:right-0 sm:top-0 sm:mt-0"
+                        >
+                            <SecondaryButton class="h-11 px-5" @click="openEditModal(exercise)">
                                 編集
                             </SecondaryButton>
-                            <DangerButton
+                            <DangerOutlineButton
                                 :disabled="!canDelete(exercise)"
                                 :title="
                                     canDelete(exercise)
@@ -407,7 +411,7 @@ const deleteExercise = () => {
                                 @click="confirmDelete(exercise)"
                             >
                                 削除
-                            </DangerButton>
+                            </DangerOutlineButton>
                         </div>
                         <p v-if="!canDelete(exercise)" class="mt-1 text-xs text-ink-3">
                             {{ exercise.workout_sets_count }}件の記録で使用中のため削除できません

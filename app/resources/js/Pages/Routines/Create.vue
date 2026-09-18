@@ -35,7 +35,7 @@ const submit = () => {
                     id="name"
                     v-model="form.name"
                     type="text"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full sm:max-w-md"
                     placeholder="例: 胸の日"
                     maxlength="60"
                     required
